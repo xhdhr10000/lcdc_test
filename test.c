@@ -1,0 +1,946 @@
+#include <stdio.h>
+#include <fcntl.h>
+#include <linux/fb.h>
+#include <sys/mman.h>
+#include <malloc.h>
+#include <string.h>
+#include <linux/ioctl.h>
+#include "test.h"
+
+#define ACTION_UI		0x101
+#define ACTION_VIDEO		0x102
+#define ACTION_UV		0x103
+#define ACTION_CAPTURE		0x104
+#define ACTION_CLEAR		0x105
+#define ACTION_LOAD		0x106
+#define ACTION_PARAM		0x107
+#define ACTION_WRITEBACK	0x108
+#define ACTION_RESET		0x109
+
+#define BI_RGB		0
+#define BI_BITFIELDS	3
+
+#define FB_UI_PARAM _IOW('F', 0x25, struct gc_spec)
+#define FB_VID_PARAM _IOW('F', 0x26, struct gc_spec)
+#define FB_CAP_PARAM _IOW('F', 0x27, struct gc_spec)
+#define FB_RESET_PARAM _IOW('F', 0x28, struct gc_spec)
+#define FB_UI_MEM_SIZE 0x2000000
+#define FB_VID_MEM_SIZE 0x1000000
+#define FB_CAP_MEM_SIZE 0x1000000
+
+#define DEBUG
+
+/*** typedef ***/
+struct bmp_header {
+	unsigned short	magic_number;
+	unsigned int	file_size;
+	unsigned short	reserved[2];
+	unsigned int	offset;
+}__attribute__((packed));
+
+struct dib_header {
+	unsigned int	header_size;
+	int		bitmap_width;
+	int		bitmap_height;
+	unsigned short	num_color_planes;
+	unsigned short	bits_per_pixel;
+	unsigned int	compression;
+	unsigned int	image_size;
+	int		horizontal_resolution;	//pixel per meter
+	int		vertical_resolution;	//pixel per meter
+	unsigned int	num_colors_in_palette;
+	unsigned int	num_important_colors;
+};
+
+
+/*** global viriables ***/
+int fd = -1;
+struct fb_var_screeninfo vi;
+struct fb_fix_screeninfo fi;
+void *ui_buffer, *vi_buffer, *wb_buffer;
+
+FILE *fpbmp;
+struct bmp_header bmp_header;
+struct dib_header dib_header;
+
+
+/*** functions ***/
+
+int help()
+{
+	printf("Help of lcdc_test\n");
+	return 0;
+}
+
+/**
+ * Funcion open_framebuffer(char *fb)
+ *	Open framebuffer for later usage
+ * Parameter:
+ *	fb: Full path of framebuffer
+ * Return value:
+ *	 0: Success
+ *	-1: Open failed
+ */
+int open_framebuffer(char *fb)
+{
+	fd = open(fb, O_RDWR);
+	if (fd < 0) {
+		printf("[E:xiehang] Cannot open fb0, %d\n", fd);
+		return -1;
+	}
+	return 0;
+}
+
+/**
+ * Function get_screen_info()
+ *
+ * Return value:
+ *	 0: Success
+ *	-1: Framebuffer not open
+ *	-2: Get VSCREENINFO failed
+ *	-3: Get FSCREENINFO failed
+ */
+int get_screen_info()
+{
+	if (fd < 0) return -1;
+
+	if (ioctl(fd, FBIOGET_VSCREENINFO, &vi) < 0) {
+		printf("[E:xiehang] Get vScreenInfo failed\n");
+		return -2;
+	}
+
+	if (ioctl(fd, FBIOGET_FSCREENINFO, &fi) < 0) {
+		printf("[E:xiehang] Get fScreenInfo failed\n");
+		return -3;
+	}
+
+	return 0;
+}
+
+int set_screen_info()
+{
+/*
+	if (vi.bits_per_pixel == 16) {
+		vi.bits_per_pixel = 32;
+		vi.red.offset = 24;
+		vi.red.length = 8;
+		vi.green.offset = 16;
+		vi.green.length = 8;
+		vi.blue.offset = 8;
+		vi.blue.length = 8;
+		vi.transp.offset = 0;
+		vi.transp.length = 8;
+	} else {
+		vi.bits_per_pixel = 16;
+		vi.red.offset = 11;
+		vi.red.length = 5;
+		vi.green.offset = 5;
+		vi.green.length = 6;
+		vi.blue.offset = 0;
+		vi.blue.length = 5;
+		vi.transp.offset = 0;
+		vi.transp.length = 0;
+	}
+	if (ioctl(fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
+		printf("[E:xiehang] Put vScreenInfo failed\n");
+	}
+*/
+	return 0;
+}
+
+/**
+ * Function dump_screen_info()
+ */
+#ifndef DEBUG
+#define dump_screen_info()
+#else
+int dump_screen_info()
+{
+	printf("[I:xiehang] vScreenInfo:\n");
+	printf("    xres=%d yres=%d\n", vi.xres, vi.yres);
+	printf("    xres_virtual=%d yres_virtual=%d\n", vi.xres_virtual, vi.yres_virtual);
+	printf("    xoffset=%d yoffset=%d\n", vi.xoffset, vi.yoffset);
+	printf("    bits_per_pixel=%d grayscale=%d\n", vi.bits_per_pixel, vi.grayscale);
+	printf("    fb_bitfield info:\n");
+	printf("        red:   offset=%d length=%d msb_right=%d\n", vi.red.offset, vi.red.length, vi.red.msb_right);
+	printf("        green: offset=%d length=%d msb_right=%d\n", vi.green.offset, vi.green.length, vi.green.msb_right);
+	printf("        blue:  offset=%d length=%d msb_right=%d\n", vi.blue.offset, vi.blue.length, vi.blue.msb_right);
+	printf("        transp:offset=%d length=%d msb_right=%d\n", vi.transp.offset, vi.transp.length, vi.transp.msb_right);
+	printf("    nonstd=%d\n", vi.nonstd);
+	printf("    activate=%d\n", vi.activate);
+	printf("    height=%d\n", vi.height);
+	printf("    width=%d\n", vi.width);
+	printf("    accel_flags=%d\n", vi.accel_flags);
+	printf("    pixclock=%d\n", vi.pixclock);
+	printf("    left_margin=%d\n", vi.left_margin);
+	printf("    right_margin=%d\n", vi.right_margin);
+	printf("    upper_margin=%d\n", vi.upper_margin);
+	printf("    lower_margin=%d\n", vi.lower_margin);
+	printf("    hsync_len=%d\n", vi.hsync_len);
+	printf("    vsync_len=%d\n", vi.vsync_len);
+	printf("    sync=%d\n", vi.sync);
+	printf("    vmode=%d\n", vi.vmode);
+	printf("    rotate=%d\n", vi.rotate);
+
+	printf("[I:xiehang] fScreenInfo:\n");
+	printf("    id=%s\n", fi.id);
+	printf("    smem_start=0x%x\n", fi.smem_start);
+	printf("    smem_len=0x%x\n", fi.smem_len);
+	printf("    type=%d\n", fi.type);
+	printf("    type_aux=%d\n", fi.type_aux);
+	printf("    visual=%d\n", fi.visual);
+	printf("    xpanstep=%d\n", fi.xpanstep);
+	printf("    ypanstep=%d\n", fi.ypanstep);
+	printf("    ywrapstep=%d\n", fi.ywrapstep);
+	printf("    line_length=%d\n", fi.line_length);
+	printf("    mmio_start=0x%x\n", fi.mmio_start);
+	printf("    mmio_len=%d\n", fi.mmio_len);
+	printf("    accel=%d\n", fi.accel);
+
+	return 0;
+}
+#endif
+
+int create_memory_map()
+{
+#ifdef DEV_ANDROID
+	if (fi.smem_len <= 0) return -1;
+	ui_buffer = mmap(0, fi.smem_len, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (ui_buffer == MAP_FAILED) {
+		printf("[E:xiehang] ui mmap failed\n");
+		return -2;
+	}
+#else
+	ui_buffer = mmap(0, FB_UI_MEM_SIZE + FB_VID_MEM_SIZE + FB_CAP_MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	if (ui_buffer == MAP_FAILED) {
+		printf("[E:xiehang] ui mmap failed\n");
+		return -2;
+	}
+/*
+	vi_buffer = mmap(0, FB_VID_MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, FB_UI_MEM_SIZE);
+	if (vi_buffer == MAP_FAILED) {
+		printf("[E:xiehang] vi mmap failed\n");
+		return -3;
+	}
+	wb_buffer = mmap(0, FB_CAP_MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, FB_UI_MEM_SIZE+FB_VID_MEM_SIZE);
+	if (wb_buffer == MAP_FAILED) {
+		printf("[E:xiehang] wb mmap failed\n");
+		return -4;
+	}
+*/
+	vi_buffer = ui_buffer + FB_UI_MEM_SIZE;
+	wb_buffer = vi_buffer + FB_VID_MEM_SIZE;
+#endif
+	return 0;
+}
+
+int open_bmp_file(char *path)
+{
+	size_t bytesRead;
+
+	fpbmp = fopen(path, "rb");
+	if (fpbmp == NULL) {
+		printf("[E:xiehang] open bmp file failed: %s\n", path);
+		return -1;
+	}
+
+	bytesRead = fread(&bmp_header, 1, sizeof(bmp_header), fpbmp);
+	if (bytesRead != sizeof(bmp_header)) {
+		printf("[E:xiehang] Read bmp header failed, returned %d bytes\n", bytesRead);
+		goto e_open_bmp_file;
+	}
+
+	bytesRead = fread(&dib_header, 1, sizeof(dib_header), fpbmp);
+	if (bytesRead != sizeof(dib_header)) {
+		printf("[E:xiehang] Read dib header failed, returned %d bytes\n", bytesRead);
+		goto e_open_bmp_file;
+	}
+
+	return 0;
+
+e_open_bmp_file:
+	fclose(fpbmp);
+	return -1;
+}
+
+#ifndef DEBUG
+#define dump_bmp_info()
+#else
+int dump_bmp_info()
+{
+	printf("[I:xiehang] bmp header info:\n");
+	printf("    size=%d\n", sizeof(bmp_header));
+	printf("    magic_number=0x%x\n", bmp_header.magic_number);
+	printf("    file_size=%d\n", bmp_header.file_size);
+	printf("    reserved=%d %d\n", bmp_header.reserved[0], bmp_header.reserved[1]);
+	printf("    offset=0x%x\n", bmp_header.offset);
+
+	printf("[I:xiehang] dib header info:\n");
+	printf("    header_size=%d\n", dib_header.header_size);
+	printf("    bitmap_width=%d\n", dib_header.bitmap_width);
+	printf("    bitmap_height=%d\n", dib_header.bitmap_height);
+	printf("    num_color_planes=%d\n", dib_header.num_color_planes);
+	printf("    bits_per_pixel=%d\n", dib_header.bits_per_pixel);
+	printf("    compression=%d\n", dib_header.compression);
+	printf("    image_size=%d\n", dib_header.image_size);
+	printf("    horizontal_resolution=%d\n", dib_header.horizontal_resolution);
+	printf("    vertical_resolution=%d\n", dib_header.vertical_resolution);
+	printf("    num_colors_in_palette=%d\n", dib_header.num_colors_in_palette);
+	printf("    num_important_colors=%d\n", dib_header.num_important_colors);
+
+	return 0;
+}
+#endif
+
+int load_bitmap(char *path, void *buffer)
+{
+	int i, j;
+	int *out;
+	int in;
+	int r, g, b, black;
+	char *tmp;
+
+	if (buffer == NULL) {
+		printf("[E:xiehang] framebuffer == NULL\n");
+		return -1;
+	}
+	if (open_bmp_file(path)) {
+		printf("[E:xiehang] open bmp failed\n");
+		return -1;
+	}
+	dump_bmp_info();
+	if (fseek(fpbmp, bmp_header.offset, SEEK_SET) != 0) {
+		printf("[E:xiehang] fseek pfbmp failed\n");
+		return -1;
+	}
+
+	out = buffer + vi.yoffset*(vi.xres*vi.bits_per_pixel/8);
+	if (vi.bits_per_pixel == 32) {
+		if (dib_header.bits_per_pixel == 32) {
+			for (i=dib_header.bitmap_height-1; i>=0; i--)
+			for (j=0; j<dib_header.bitmap_width; j++) {
+				fread(&in, 1, sizeof(int), fpbmp);
+				out[i*vi.xres+j] = in;
+			}
+		}
+		else if (dib_header.bits_per_pixel == 24) {
+			for (i=dib_header.bitmap_height-1; i>=0; i--) {
+				for (j=0; j<dib_header.bitmap_width; j++) {
+					fread(&in, 1, sizeof(char)*3, fpbmp);
+					out[i*vi.xres+j] = in;
+				}
+				if (dib_header.bitmap_width*3%4 != 0)
+					fread(&in, 1, sizeof(char)*(dib_header.bitmap_width*3%4), fpbmp);
+			}
+		}
+		else if (dib_header.bits_per_pixel == 16) {
+			if (dib_header.compression == BI_RGB) {
+				r = 0x7c00;
+				g = 0x03e0;
+				b = 0x001f;
+				black = 0x8000;
+			} else {
+				if (fseek(fpbmp, sizeof(bmp_header)+sizeof(dib_header), SEEK_SET) != 0) {
+			                printf("[E:xiehang] fseek fpbmp for 16bit failed\n");
+			                return -1;
+			        }
+				fread(&r, 1, sizeof(int), fpbmp); // read mask
+				fread(&g, 1, sizeof(int), fpbmp); // green mask
+				fread(&b, 1, sizeof(int), fpbmp); // blue mask
+				fread(&black, 1, sizeof(int), fpbmp); // black mask
+			}
+			if (fseek(fpbmp, bmp_header.offset, SEEK_SET) != 0) {
+ 				printf("[E:xiehang] fseek pfbmp failed\n");
+				return -1;
+			}
+			for (i=dib_header.bitmap_height-1; i>=0; i--) {
+	                        for (j=0; j<dib_header.bitmap_width; j++) {
+					fread(&in, 1, sizeof(char)*2, fpbmp);
+					in &= ~black;
+					if (g == 0x03e0) {// rgb555
+						out[i*vi.xres+j]  = ((in & r) << 6) << 3;
+						out[i*vi.xres+j] |= ((in & g) << 3) << 3;
+					} else {
+						out[i*vi.xres+j]  = ((in & r) << 5) << 3;
+						out[i*vi.xres+j] |= ((in & g) << 3) << 2;
+					}
+					out[i*vi.xres+j] |= (in & b) << 3;
+				}
+				if (dib_header.bitmap_width*2%4 != 0)
+					fread(&in, 1, sizeof(char)*(dib_header.bitmap_width*2%4), fpbmp);
+			}
+		}
+		else {
+			printf("[E:xiehang] bmp.bits_per_pixel=%d, not supported\n", dib_header.bits_per_pixel);
+		}
+	}
+	else if (vi.bits_per_pixel == 24) {
+		if (dib_header.bits_per_pixel == 32) {
+			for (i=dib_header.bitmap_height-1; i>=0; i--)
+			for (j=0; j<dib_header.bitmap_width/4*3; ) {
+				fread(&in, 1, sizeof(int), fpbmp);
+				out[i*vi.xres*3/4+j]  = (in & 0x00ffffff) << 8;
+				fread(&in, 1, sizeof(int), fpbmp);
+				out[i*vi.xres*3/4+j] |= (in & 0x00ff0000) >> 16;
+				j++;
+				out[i*vi.xres*3/4+j]  = (in & 0x0000ffff) << 16;
+				fread(&in, 1, sizeof(int), fpbmp);
+				out[i*vi.xres*3/4+j] |= (in & 0x00ffff00) >> 8;
+				j++;
+				out[i*vi.xres*3/4+j]  = (in & 0x000000ff) << 24;
+				fread(&in, 1, sizeof(int), fpbmp);
+				out[i*vi.xres*3/4+j] |= (in & 0x00ffffff);
+				j++;
+			}
+		}
+		else if (dib_header.bits_per_pixel == 24) {
+			for (i=dib_header.bitmap_height-1; i>=0; i--) {
+				for (j=0; j<dib_header.bitmap_width/4*3; ) {
+					fread(&in, 1, sizeof(char)*3, fpbmp);
+					out[i*vi.xres*3/4+j]  = in << 8;
+					fread(&in, 1, sizeof(char)*3, fpbmp);
+					out[i*vi.xres*3/4+j] |= (in & 0x00ff0000) >> 16;
+					j++;
+					out[i*vi.xres*3/4+j]  = (in & 0x0000ffff) << 16;
+					fread(&in, 1, sizeof(char)*3, fpbmp);
+					out[i*vi.xres*3/4+j] |= (in & 0x00ffff00) >> 8;
+					j++;
+					out[i*vi.xres*3/4+j]  = (in & 0x000000ff) << 24;
+					fread(&in, 1, sizeof(char)*3, fpbmp);
+					out[i*vi.xres*3/4+j] |= (in & 0x00ffffff);
+					j++;
+				}
+				if (dib_header.bitmap_width*3%4 != 0)
+					fread(&in, 1, sizeof(char)*(dib_header.bitmap_width*3%4), fpbmp);
+			}
+		}
+		else if (dib_header.bits_per_pixel == 16) {
+			if (dib_header.compression == BI_RGB) {
+				r = 0x7c00;
+				g = 0x03e0;
+				b = 0x001f;
+				black = 0x8000;
+			} else {
+				if (fseek(fpbmp, sizeof(bmp_header)+sizeof(dib_header), SEEK_SET) != 0) {
+			                printf("[E:xiehang] fseek fpbmp for 16bit failed\n");
+			                return -1;
+			        }
+				fread(&r, 1, sizeof(int), fpbmp); // read mask
+				fread(&g, 1, sizeof(int), fpbmp); // green mask
+				fread(&b, 1, sizeof(int), fpbmp); // blue mask
+				fread(&black, 1, sizeof(int), fpbmp); // black mask
+			}
+			if (fseek(fpbmp, bmp_header.offset, SEEK_SET) != 0) {
+ 				printf("[E:xiehang] fseek pfbmp failed\n");
+				return -1;
+			}
+			for (i=dib_header.bitmap_height-1; i>=0; i--) {
+				for (j=0; j<dib_header.bitmap_width/4*3; ) {
+					fread(&in, 1, sizeof(char)*2, fpbmp);
+					in &= ~black;
+					if (g == 0x3e0) { // rgb555
+						out[i*vi.xres*3/4+j]  = (in & r) << 17;
+						out[i*vi.xres*3/4+j] |= (in & g) << 14;
+					} else {
+						out[i*vi.xres*3/4+j]  = (in & r) << 16;
+						out[i*vi.xres*3/4+j] |= (in & g) << 13;
+					}
+					out[i*vi.xres*3/4+j] |= (in & b) << 11;
+					fread(&in, 1, sizeof(char)*2, fpbmp);
+					in &= ~black;
+					if (g == 0x3e0) {
+						out[i*vi.xres*3/4+j] |= (in & r) >> 7;
+					} else {
+						out[i*vi.xres*3/4+j] |= (in & r) >> 8;
+					}
+					j++;
+					if (g == 0x3e0) {
+						out[i*vi.xres*3/4+j]  = (in & g) << 22;
+					} else {
+						out[i*vi.xres*3/4+j]  = (in & g) << 21;
+					}
+					out[i*vi.xres*3/4+j] |= (in & b) << 19;
+					fread(&in, 1, sizeof(char)*2, fpbmp);
+					in &= ~black;
+					if (g == 0x3e0) {
+						out[i*vi.xres*3/4+j] |= (in & r) << 1;
+						out[i*vi.xres*3/4+j] |= (in & g) >> 2;
+					} else {
+						out[i*vi.xres*3/4+j] |= (in & r);
+						out[i*vi.xres*3/4+j] |= (in & g) >> 3;
+					}
+					j++;
+					out[i*vi.xres*3/4+j]  = (in & b) << 27;
+					fread(&in, 1, sizeof(char)*2, fpbmp);
+					in &= ~black;
+					if (g == 0x3e0) {
+						out[i*vi.xres*3/4+j] |= (in & r) << 9;
+						out[i*vi.xres*3/4+j] |= (in & g) << 6;
+					} else {
+						out[i*vi.xres*3/4+j] |= (in & r) << 8;
+						out[i*vi.xres*3/4+j] |= (in & g) << 5;
+					}
+					out[i*vi.xres*3/4+j] |= (in & b);
+					j++;
+				}
+				if (dib_header.bitmap_width*2%4 != 0)
+                                        fread(&in, 1, sizeof(char)*(dib_header.bitmap_width*2%4), fpbmp);
+			}
+		} else {
+			printf("[E:xiehang] bmp.bits_per_pixel=%d, not supported\n", dib_header.bits_per_pixel);
+		}
+	}
+	else if (vi.bits_per_pixel == 16) {
+		if (dib_header.bits_per_pixel == 32) {
+			for (i=dib_header.bitmap_height-1; i>=0; i--)
+			for (j=0; j<dib_header.bitmap_width/2; j++) {
+				fread(&in, 1, sizeof(int), fpbmp);
+				out[i*vi.xres/2+j]  = (in & 0x00f80000) << 8;
+				out[i*vi.xres/2+j] |= (in & 0x0000fc00) << 11;
+				out[i*vi.xres/2+j] |= (in & 0x000000f8) << 13;
+				fread(&in, 1, sizeof(int), fpbmp);
+				out[i*vi.xres/2+j] |= (in & 0x00f80000) >> 8;
+				out[i*vi.xres/2+j] |= (in & 0x0000fc00) >> 5;
+				out[i*vi.xres/2+j] |= (in & 0x000000f8) >> 3;
+			}
+		}
+		else if (dib_header.bits_per_pixel == 24) {
+			for (i=dib_header.bitmap_height-1; i>=0; i--) {
+				for (j=0; j<dib_header.bitmap_width/2; j++) {
+					fread(&in, 1, sizeof(char)*3, fpbmp);
+					out[i*vi.xres/2+j]  = (in & 0x00f80000) << 8;
+					out[i*vi.xres/2+j] |= (in & 0x0000fc00) << 11;
+					out[i*vi.xres/2+j] |= (in & 0x000000f8) << 13;
+					fread(&in, 1, sizeof(char)*3, fpbmp);
+					out[i*vi.xres/2+j] |= (in & 0x00f80000) >> 8;
+					out[i*vi.xres/2+j] |= (in & 0x0000fc00) >> 5;
+					out[i*vi.xres/2+j] |= (in & 0x000000f8) >> 3;
+				}
+				if (dib_header.bitmap_width*3%4 != 0)
+					fread(&in, 1, sizeof(char)*(dib_header.bitmap_width*3%4), fpbmp);
+			}
+		}
+		else if (dib_header.bits_per_pixel == 16) {
+			if (dib_header.compression == BI_RGB) {
+                                r = 0x7c00;
+                                g = 0x03e0;
+                                b = 0x001f;
+                                black = 0x8000;
+                        } else {
+                                if (fseek(fpbmp, sizeof(bmp_header)+sizeof(dib_header), SEEK_SET) != 0) {
+                                        printf("[E:xiehang] fseek fpbmp for 16bit failed\n");
+                                        return -1;
+                                }
+                                fread(&r, 1, sizeof(int), fpbmp); // read mask
+                                fread(&g, 1, sizeof(int), fpbmp); // green mask
+                                fread(&b, 1, sizeof(int), fpbmp); // blue mask
+                                fread(&black, 1, sizeof(int), fpbmp); // black mask
+                        }
+                        if (fseek(fpbmp, bmp_header.offset, SEEK_SET) != 0) {
+                                printf("[E:xiehang] fseek pfbmp failed\n");
+                                return -1;
+                        }
+			for (i=dib_header.bitmap_height-1; i>=0; i--) {
+				for (j=0; j<dib_header.bitmap_width/2; j++) {
+					fread(&in, 1, sizeof(char)*2, fpbmp);
+					in &= ~black;
+					if (g == 0x3e0) { //rgb555
+						out[i*vi.xres/2+j]  = (in & r) << 17;
+						out[i*vi.xres/2+j] |= (in & g) << 17;
+						out[i*vi.xres/2+j] |= (in & b) << 16;
+					} else {
+						out[i*vi.xres/2+j]  = (in & 0xffff) << 16;
+					}
+					fread(&in, 1, sizeof(char)*2, fpbmp);
+					in &= ~black;
+					if (g == 0x3e0) {
+						out[i*vi.xres/2+j] |= (in & r) << 1;
+						out[i*vi.xres/2+j] |= (in & g) << 1;
+						out[i*vi.xres/2+j] |= (in & b);
+					} else {
+						out[i*vi.xres/2+j] |= (in & 0xffff);
+					}
+				}
+				if (dib_header.bitmap_width*2%4 != 0)
+					fread(&in, 1, sizeof(char)*(dib_header.bitmap_width*2%4), fpbmp);
+			}
+		} else {
+			printf("[E:xiehang] bmp.bits_per_pixel=%d, not supported\n", dib_header.bits_per_pixel);
+		}
+	} else {
+		printf("[E:xiehang] vScreenInfo.bits_per_pixel = %d\n", vi.bits_per_pixel);
+	}
+
+	fclose(fpbmp);
+	return 0;
+}
+
+int save_output(char *path, void *buffer)
+{
+	FILE *fpout;
+	char *bmpout;
+	int *in, *out;
+	int i, j;
+	int r, g, b;
+
+	dib_header.header_size = sizeof(dib_header);
+	dib_header.bitmap_width = vi.xres;
+	dib_header.bitmap_height = vi.yres;
+	dib_header.num_color_planes = 1;
+	dib_header.bits_per_pixel = 32;
+	dib_header.compression = BI_RGB;
+	dib_header.image_size = vi.xres*vi.yres*32/8;
+
+	bmp_header.magic_number = 0x4d42;
+	bmp_header.offset = sizeof(bmp_header)+sizeof(dib_header);
+	bmp_header.file_size = dib_header.image_size+bmp_header.offset;
+	bmpout = (char*)malloc(bmp_header.file_size*sizeof(char));
+	if (bmpout == NULL) return -1;
+	memcpy(bmpout, &bmp_header, sizeof(bmp_header));
+	memcpy(bmpout+sizeof(bmp_header), &dib_header, sizeof(dib_header));
+	in = buffer + vi.yoffset*(vi.xres*vi.bits_per_pixel/8);
+	out = (int*)(bmpout + bmp_header.offset);
+	if (vi.bits_per_pixel == 32) {
+		for (i=vi.yres-1; i>=0; i--)
+		for (j=0; j<vi.xres; j++)
+			*out++ = (in[i*vi.xres+j] | 0xff000000);
+	}
+	else if (vi.bits_per_pixel == 24) {
+		for (i=vi.yres-1; i>=0; i--)
+		for (j=0; j<vi.xres*3/4; ) {
+			*out  = 0xff000000;
+			*out |= in[i*vi.xres*3/4+j] >> 8;
+			out++;
+			*out  = 0xff000000;
+			*out |= (in[i*vi.xres*3/4+j] & 0x000000ff) << 16;
+			j++;
+			*out |= (in[i*vi.xres*3/4+j] & 0xffff0000) >> 16;
+			out++;
+			*out  = 0xff000000;
+			*out |= (in[i*vi.xres*3/4+j] & 0x0000ffff) << 8;
+			j++;
+			*out |= (in[i*vi.xres*3/4+j] & 0xff000000) >> 24;
+			out++;
+			*out  = 0xff000000;
+			*out |= (in[i*vi.xres*3/4+j] & 0x00ffffff);
+			j++;
+		}
+	}
+	else if (vi.bits_per_pixel == 16) {
+		r = 0xf8000000;
+		g = 0x07e00000;
+		b = 0x001f0000;
+		for (i=vi.yres-1; i>=0; i--)
+		for (j=0; j<vi.xres/2; j++) {
+			*out  = (in[i*vi.xres/2+j] & r) >> 8;
+			*out |= (in[i*vi.xres/2+j] & g) >> 11;
+			*out |= (in[i*vi.xres/2+j] & b) >> 13;
+			out++;
+			*out  = ( (in[i*vi.xres/2+j]<<16) & r) >> 8;
+			*out |= ( (in[i*vi.xres/2+j]<<16) & g) >> 11;
+			*out |= ( (in[i*vi.xres/2+j]<<16) & b) >> 13;
+			out++;
+		}
+	} else {
+		printf("[E:xiehang] Unsupported bpp:%d\n", vi.bits_per_pixel);
+	}
+
+	fpout = fopen(path, "wb");
+	if (fpout == NULL) {
+		printf("[E:xiehang] open %s failed\n", path);
+		goto e_free_bmpout;
+	}
+	int bytesWrite = fwrite(bmpout, 1, bmp_header.file_size, fpout);
+	if (bytesWrite != bmp_header.file_size) {
+		printf("[E:xiehang] fwrite failed, wrote %d bytes\n", bytesWrite);
+		goto e_close_fpout;
+	}
+
+	fclose(fpout);
+	free(bmpout);
+	return 0;
+
+e_close_fpout:
+	fclose(fpout);
+e_free_bmpout:
+	free(bmpout);
+	return -1;
+}
+
+int write_back(struct gc_spec *spec)
+{
+	if (ioctl(fd, FB_CAP_PARAM, spec) < 0) {
+		printf("[E:xiehang] ioctl FB_CAP_PARAM failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+int reset()
+{
+	if (ioctl(fd, FB_RESET_PARAM, NULL) < 0) {
+		printf("[E:xiehang] ioctl FB_RESET_PARAM failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+int ui_param(struct gc_spec *spec)
+{
+	if (ioctl(fd, FB_UI_PARAM, spec) < 0) {
+		printf("[E:xiehang] ioctl FB_UI_PARAM failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+int ui_process(int index)
+{
+	char outfile[64];
+
+	if ( (ui_cases[index].clr) && (load_bitmap("black.bmp", ui_buffer)) ) return -1;
+	if (load_bitmap(ui_cases[index].srcfile, ui_buffer)) return -1;
+	sleep(1);
+
+	ui_param(&(ui_cases[index].ui));
+	reset();
+	sleep(1);
+
+	sprintf(outfile, "out_ui_case%d.bmp", index);
+#ifdef DEV_ANDROID
+	if (save_output(outfile, ui_buffer)) return -1;
+#else
+	if (write_back(&(ui_cases[index].ui))) return -1;
+	if (save_output(outfile, wb_buffer)) return -1;
+#endif
+	sleep(1);
+
+	return 0;
+}
+
+int vi_param(struct gc_spec *spec)
+{
+	if (ioctl(fd, FB_VID_PARAM, spec) < 0) {
+		printf("[E:xiehang] ioctl FB_VID_PARAM failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+int vi_process(int index)
+{
+	char outfile[64];
+
+	if ( (vi_cases[index].clr) && (load_bitmap("black.bmp", vi_buffer)) ) return -1;
+	if (load_bitmap(vi_cases[index].srcfile, vi_buffer)) return -1;
+	sleep(1);
+
+	vi_param(&(vi_cases[index].vi));
+	reset();
+	sleep(1);
+
+	sprintf(outfile, "out_vid_case%d.bmp", index);
+#ifndef DEV_ANDROID
+	if (save_output(outfile, ui_buffer)) return -1;
+#else
+	if (write_back(&(ui_cases[index].ui))) return -1;
+	if (save_output(outfile, wb_buffer)) return -1;
+#endif
+	sleep(1);
+
+	return 0;
+}
+
+int uv_process(int index)
+{
+	char outfile[64];
+
+	if ( (uv_cases[index].ui_clr) && (load_bitmap("black.bmp", ui_buffer)) ) return -1;
+	if ( (uv_cases[index].vi_clr) && (load_bitmap("black.bmp", vi_buffer)) ) return -1;
+	if (load_bitmap(uv_cases[index].ui_srcfile, ui_buffer)) return -1;
+	if (load_bitmap(uv_cases[index].vi_srcfile, vi_buffer)) return -1;
+	sleep(1);
+
+	ui_param(&(uv_cases[index].ui));
+	vi_param(&(uv_cases[index].vi));
+	sleep(1);
+
+	sprintf(outfile, "out_uv_case%d.bmp", index);
+	if (save_output(outfile, wb_buffer)) return -1;
+	sleep(1);
+
+	return 0;
+}
+
+/**
+ * Function main
+ * Parameters:
+ *
+ * Return value:
+ *	0: Success
+ *	1: Open framebuffer failed
+ *	2: Get screeninfo failed
+ */
+int main(int argc, char *argv[])
+{
+	int ret, i, action=-1;
+	char outfile[64];
+
+	if (argc == 1) {
+		help();
+		return 0;
+	}
+
+#ifdef DEV_ANDROID
+	ret = open_framebuffer("/dev/graphics/fb0");
+#else
+	ret = open_framebuffer("/dev/fb0");
+#endif
+	if (ret < 0) return 1;
+
+	if (get_screen_info()) return 2;
+
+	dump_screen_info();
+
+	if (create_memory_map()) return 3;
+
+	if (set_screen_info()) return 4;
+
+	if (!strcmp(argv[1], "UI"))		action = ACTION_UI;
+	else if (!strcmp(argv[1], "VIDEO"))	action = ACTION_VIDEO;
+	else if (!strcmp(argv[1], "UV"))	action = ACTION_UV;
+	else if (!strcmp(argv[1], "CAP"))	action = ACTION_CAPTURE;
+	else if (!strcmp(argv[1], "CLEAR"))	action = ACTION_CLEAR;
+	else if (!strcmp(argv[1], "LOAD"))	action = ACTION_LOAD;
+	else if (!strcmp(argv[1], "PARAM"))	action = ACTION_PARAM;
+	else if (!strcmp(argv[1], "WB"))	action = ACTION_WRITEBACK;
+	else if (!strcmp(argv[1], "RESET"))	action = ACTION_RESET;
+	else {
+		printf("[E:xiehang] Invalid args\n");
+		close(fd);
+		return 5;
+	}
+
+	if (action == ACTION_UI) {
+		if (argc > 2) {
+			// Select one case
+			i = atoi(argv[2]);
+			if (i >= sizeof(ui_cases)/sizeof(struct ui_case)-1) {
+				printf("[E:xiehang] case index out of range\n");
+				close(fd);
+				return 5;
+			}
+			printf("[I:xiehang] Start of ui case %d\n", i);
+			if (ui_process(i)) {
+				close(fd);
+				return 6;
+			}
+		} else {
+			// Run all cases
+			for (i=0; ui_cases[i].clr!=-1; i++) {
+				printf("[I:xiehang] Start of ui case %d\n", i);
+				if (ui_process(i)) {
+					close(fd);
+					return 7;
+				}
+			}
+		}
+	}
+	else if (action == ACTION_VIDEO) {
+		if (argc > 2) {
+			i = atoi(argv[2]);
+			if (i >= sizeof(vi_cases)/sizeof(struct vi_case)-1) {
+				printf("[E:xiehang] case index out of range\n");
+				close(fd);
+				return 5;
+			}
+			printf("[I:xiehang] Start of vi case %d\n", i);
+			if (vi_process(i)) {
+				close(fd);
+				return 6;
+			}
+		} else {
+			for (i=0; vi_cases[i].clr!=-1; i++) {
+				printf("[I:xiehang] Start of vi case %d\n", i);
+				if (vi_process(i)) {
+					close(fd);
+					return 7;
+				}
+			}
+		}
+	}
+	else if (action == ACTION_UV) {
+		if (argc > 2) {
+			i = atoi(argv[2]);
+			if (i >= sizeof(uv_cases)/sizeof(struct uv_case)-1) {
+				printf("[E:xiehang] case index out of range\n");
+				close(fd);
+				return 5;
+			}
+			printf("[I:xiehang] Start of uv case %d\n", i);
+			if (uv_process(i)) {
+				close(fd);
+				return 6;
+			}
+		} else {
+			for (i=0; uv_cases[i].ui_clr!=-1; i++) {
+				printf("[I:xiehang] Start of uv case %d\n", i);
+				if (uv_process(i)) {
+					close(fd);
+					return 7;
+				}
+			}
+		}
+	}
+	else if (action == ACTION_CAPTURE) {
+#ifndef DEV_ANDROID
+		save_output("out_capture.bmp", ui_buffer);
+#else
+		if (!write_back(&(ui_cases[0].ui)))
+			save_output("out_capture.bmp", wb_buffer);
+#endif
+		sleep(1);
+	}
+	else if (action == ACTION_CLEAR) {
+		if ( (argc>=3) && (strcmp(argv[2], "VIDEO") == 0) )
+			load_bitmap("black.bmp", vi_buffer);
+		else
+			load_bitmap("black.bmp", ui_buffer);
+	}
+	else if (action == ACTION_LOAD) {
+		if ( (argc>=3) && (strcmp(argv[2], "VIDEO") == 0) )
+			load_bitmap(argv[3], vi_buffer);
+		else
+			load_bitmap(argv[3], ui_buffer);
+	}
+	else if (action == ACTION_PARAM) {
+		FILE *fparam = fopen("param.txt", "rw");
+		if (fparam == NULL) {
+			printf("[E:xiehang] open param.txt failed\n");
+			return 5;
+		}
+		struct gc_spec param = {0};
+		fscanf(fparam, "%d%d%d%d%d%d", &param.src.width, &param.src.height, &param.src.rect.left,
+			&param.src.rect.top, &param.src.rect.right, &param.src.rect.bottom);
+		fscanf(fparam, "%d%d%d%d%d%d", &param.dst.width, &param.dst.height, &param.dst.rect.left,
+			&param.dst.rect.top, &param.dst.rect.right, &param.dst.rect.bottom);
+		param.swtch = 1;
+		param.upd = 1;
+		if ( (argc>=3) && (strcmp(argv[2], "VIDEO") == 0) )
+			vi_param(&param);
+		else
+			ui_param(&param);
+	}
+	else if (action == ACTION_WRITEBACK) {
+		write_back(&(ui_cases[0].ui));
+		sleep(1);
+		save_output("out_wb.bmp", wb_buffer);
+	}
+	else if (action == ACTION_RESET) {
+		reset();
+		sleep(1);
+	}
+
+	close(fd);
+	return 0;
+}
