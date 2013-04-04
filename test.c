@@ -16,6 +16,7 @@
 #define ACTION_PARAM		0x107
 #define ACTION_WRITEBACK	0x108
 #define ACTION_RESET		0x109
+#define ACTION_WRITEBACKC	0x110
 
 #define BI_RGB		0
 #define BI_BITFIELDS	3
@@ -57,7 +58,8 @@ struct dib_header {
 int fd = -1;
 struct fb_var_screeninfo vi;
 struct fb_fix_screeninfo fi;
-void *ui_buffer, *vi_buffer, *wb_buffer;
+void *ui_buffer, *vi_buffer, *wb_buffer[2];
+int wb_cur = 0;
 
 FILE *fpbmp;
 struct bmp_header bmp_header;
@@ -69,6 +71,25 @@ struct dib_header dib_header;
 int help()
 {
 	printf("Help of lcdc_test\n");
+	printf("\nParameters:\n");
+	printf("UI | VIDEO | UV | CAP | CLEAR | LOAD | PARAM | WB | WBC | RESET\n");
+	printf("\nUI|VIDEO|UV [case]:\n");
+	printf("    UI|VIDEO|UV [case]: [case] is the index of cases\n");
+	printf("                        Without [case]: Run all cases in a row\n");
+	printf("\nCAP:\n");
+	printf("    Capture from ui buffer\n");
+	printf("\nCLEAR [UI|VIDEO]:\n");
+	printf("    Clear ui/video buffer to black\n");
+	printf("\nLOAD [UI|VIDEO] [FILE]:\n");
+	printf("    Load FILE into UI/VIDEO buffer\n");
+	printf("\nPARAM [UI|VIDEO]:\n");
+	printf("    Set UI/VIDEO param in param.txt\n");
+	printf("\nWB:\n");
+	printf("    Writeback single frame\n");
+	printf("\nWBC [TIMES] [DELAY]:\n");
+	printf("    Writeback TIMES frames with DELAY seconds after each action\n");
+	printf("\nRESET:\n");
+	printf("    Reset lcdc\n");
 	return 0;
 }
 
@@ -211,7 +232,7 @@ int create_memory_map()
 		return -2;
 	}
 #else
-	ui_buffer = mmap(0, FB_UI_MEM_SIZE + FB_VID_MEM_SIZE + FB_CAP_MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+	ui_buffer = mmap(0, FB_UI_MEM_SIZE + FB_VID_MEM_SIZE + FB_CAP_MEM_SIZE*2, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 	if (ui_buffer == MAP_FAILED) {
 		printf("[E:xiehang] ui mmap failed\n");
 		return -2;
@@ -229,7 +250,8 @@ int create_memory_map()
 	}
 */
 	vi_buffer = ui_buffer + FB_UI_MEM_SIZE;
-	wb_buffer = vi_buffer + FB_VID_MEM_SIZE;
+	wb_buffer[0] = vi_buffer + FB_VID_MEM_SIZE;
+	wb_buffer[1] = wb_buffer[0] + FB_CAP_MEM_SIZE;
 #endif
 	return 0;
 }
@@ -667,9 +689,10 @@ e_free_bmpout:
 	return -1;
 }
 
-int write_back(struct gc_spec *spec)
+int write_back(int flag)
 {
-	if (ioctl(fd, FB_CAP_PARAM, spec) < 0) {
+	int param = flag;
+	if (ioctl(fd, FB_CAP_PARAM, &param) < 0) {
 		printf("[E:xiehang] ioctl FB_CAP_PARAM failed\n");
 		return -1;
 	}
@@ -710,8 +733,9 @@ int ui_process(int index)
 #ifdef DEV_ANDROID
 	if (save_output(outfile, ui_buffer)) return -1;
 #else
-	if (write_back(&(ui_cases[index].ui))) return -1;
-	if (save_output(outfile, wb_buffer)) return -1;
+	if (write_back(0)) return -1;
+	if (save_output(outfile, wb_buffer[wb_cur])) return -1;
+	//wb_cur = 1-wb_cur;
 #endif
 	sleep(1);
 
@@ -743,8 +767,9 @@ int vi_process(int index)
 #ifndef DEV_ANDROID
 	if (save_output(outfile, ui_buffer)) return -1;
 #else
-	if (write_back(&(ui_cases[index].ui))) return -1;
-	if (save_output(outfile, wb_buffer)) return -1;
+	if (write_back(0)) return -1;
+	if (save_output(outfile, wb_buffer[wb_cur])) return -1;
+	//wb_cur = 1-wb_cur;
 #endif
 	sleep(1);
 
@@ -766,7 +791,8 @@ int uv_process(int index)
 	sleep(1);
 
 	sprintf(outfile, "out_uv_case%d.bmp", index);
-	if (save_output(outfile, wb_buffer)) return -1;
+	if (save_output(outfile, wb_buffer[wb_cur])) return -1;
+	//wb_cur = 1-wb_cur;
 	sleep(1);
 
 	return 0;
@@ -814,6 +840,7 @@ int main(int argc, char *argv[])
 	else if (!strcmp(argv[1], "LOAD"))	action = ACTION_LOAD;
 	else if (!strcmp(argv[1], "PARAM"))	action = ACTION_PARAM;
 	else if (!strcmp(argv[1], "WB"))	action = ACTION_WRITEBACK;
+	else if (!strcmp(argv[1], "WBC"))	action = ACTION_WRITEBACKC;
 	else if (!strcmp(argv[1], "RESET"))	action = ACTION_RESET;
 	else {
 		printf("[E:xiehang] Invalid args\n");
@@ -896,8 +923,10 @@ int main(int argc, char *argv[])
 #ifndef DEV_ANDROID
 		save_output("out_capture.bmp", ui_buffer);
 #else
-		if (!write_back(&(ui_cases[0].ui)))
-			save_output("out_capture.bmp", wb_buffer);
+		if (!write_back(0)) {
+			save_output("out_capture.bmp", wb_buffer[wb_cur]);
+			//wb_cur = 1-wb_cur;
+		}
 #endif
 		sleep(1);
 	}
@@ -932,9 +961,27 @@ int main(int argc, char *argv[])
 			ui_param(&param);
 	}
 	else if (action == ACTION_WRITEBACK) {
-		write_back(&(ui_cases[0].ui));
+		write_back(0);
 		sleep(1);
-		save_output("out_wb.bmp", wb_buffer);
+		save_output("out_wb.bmp", wb_buffer[wb_cur]);
+		//wb_cur = 1-wb_cur;
+	}
+	else if (action == ACTION_WRITEBACKC) {
+		int times, delay;
+		char outfile[64];
+
+		write_back(1);
+		sleep(1);
+		if (argc>=3) times=atoi(argv[2]);
+		times = (times<=0)?5:times;
+		if (argc>=4) delay=atoi(argv[3]);
+		delay = (delay<=0)?1:delay;
+		for (i=0; i<times; i++) {
+			sprintf(outfile, "out_wbc%d.bmp", i);
+			save_output(outfile, wb_buffer[wb_cur]);
+			//wb_cur = 1-wb_cur;
+			sleep(delay);
+		}
 	}
 	else if (action == ACTION_RESET) {
 		reset();
