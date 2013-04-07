@@ -16,15 +16,18 @@
 #define ACTION_PARAM		0x107
 #define ACTION_WRITEBACK	0x108
 #define ACTION_RESET		0x109
+#define ACTION_PRI_REGS 	0x10a
 #define ACTION_WRITEBACKC	0x110
 
 #define BI_RGB		0
 #define BI_BITFIELDS	3
 
+#define SET_RESOLUTION_RATIO _IOW('F', 0x24, struct fb_videomode)
 #define FB_UI_PARAM _IOW('F', 0x25, struct gc_spec)
 #define FB_VID_PARAM _IOW('F', 0x26, struct gc_spec)
 #define FB_CAP_PARAM _IOW('F', 0x27, struct gc_spec)
 #define FB_RESET_PARAM _IOW('F', 0x28, struct gc_spec)
+#define FB_PRI_REGS _IOW('F', 0x29, struct gc_spec)
 #define FB_UI_MEM_SIZE 0x2000000
 #define FB_VID_MEM_SIZE 0x1000000
 #define FB_CAP_MEM_SIZE 0x1000000
@@ -708,6 +711,24 @@ int reset()
 	return 0;
 }
 
+int pri_regs()
+{
+	if (ioctl(fd, FB_PRI_REGS, NULL) < 0) {
+		printf("[E:xiehang] ioctl FB_PRI_REGS failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+int set_resolution_ratio(struct fb_videomode *vm)
+{
+	if (ioctl(fd, SET_RESOLUTION_RATIO, vm) < 0) {
+		printf("[E:xiehang] ioctl set_resolution_ratio failed\n");
+		return -1;
+	}
+	return 0;
+}
+
 int ui_param(struct gc_spec *spec)
 {
 	if (ioctl(fd, FB_UI_PARAM, spec) < 0) {
@@ -721,9 +742,13 @@ int ui_process(int index)
 {
 	char outfile[64];
 
+	set_resolution_ratio(&(ui_cases[index].vm));
+
+	if (get_screen_info()) return 2;
+	dump_screen_info();
+
 	if ( (ui_cases[index].clr) && (load_bitmap("black.bmp", ui_buffer)) ) return -1;
 	if (load_bitmap(ui_cases[index].srcfile, ui_buffer)) return -1;
-	sleep(1);
 
 	ui_param(&(ui_cases[index].ui));
 	reset();
@@ -757,15 +782,15 @@ int vi_process(int index)
 
 	if ( (vi_cases[index].clr) && (load_bitmap("black.bmp", vi_buffer)) ) return -1;
 	if (load_bitmap(vi_cases[index].srcfile, vi_buffer)) return -1;
-	sleep(1);
 
+	set_resolution_ratio(&(ui_cases[index].vm));
 	vi_param(&(vi_cases[index].vi));
 	reset();
 	sleep(1);
 
 	sprintf(outfile, "out_vid_case%d.bmp", index);
-#ifndef DEV_ANDROID
-	if (save_output(outfile, ui_buffer)) return -1;
+#ifdef DEV_ANDROID
+	if (save_output(outfile, vi_buffer)) return -1;
 #else
 	if (write_back(0)) return -1;
 	if (save_output(outfile, wb_buffer[wb_cur])) return -1;
@@ -842,6 +867,7 @@ int main(int argc, char *argv[])
 	else if (!strcmp(argv[1], "WB"))	action = ACTION_WRITEBACK;
 	else if (!strcmp(argv[1], "WBC"))	action = ACTION_WRITEBACKC;
 	else if (!strcmp(argv[1], "RESET"))	action = ACTION_RESET;
+	else if (!strcmp(argv[1], "PRI"))	action = ACTION_PRI_REGS;
 	else {
 		printf("[E:xiehang] Invalid args\n");
 		close(fd);
@@ -953,6 +979,7 @@ int main(int argc, char *argv[])
 			&param.src.rect.top, &param.src.rect.right, &param.src.rect.bottom);
 		fscanf(fparam, "%d%d%d%d%d%d", &param.dst.width, &param.dst.height, &param.dst.rect.left,
 			&param.dst.rect.top, &param.dst.rect.right, &param.dst.rect.bottom);
+		fclose(fparam);
 		param.swtch = 1;
 		param.upd = 1;
 		if ( (argc>=3) && (strcmp(argv[2], "VIDEO") == 0) )
@@ -987,6 +1014,11 @@ int main(int argc, char *argv[])
 		reset();
 		sleep(1);
 	}
+	else if (action == ACTION_PRI_REGS) {
+		sleep(1);
+		pri_regs();
+	}
+
 
 	close(fd);
 	return 0;

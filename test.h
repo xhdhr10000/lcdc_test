@@ -1,3 +1,20 @@
+struct fb_videomode {
+        const char *name;     /* optional */
+        unsigned int refresh; /* optional */
+        unsigned int xres;
+        unsigned int yres;
+        unsigned int pixclock;
+        unsigned int left_margin;
+        unsigned int right_margin;
+        unsigned int upper_margin;
+        unsigned int lower_margin;
+        unsigned int hsync_len;
+        unsigned int vsync_len;
+        unsigned int sync;
+        unsigned int vmode;
+        unsigned int flag;
+};
+
 struct rect_t {
         unsigned int left;
         unsigned int top;
@@ -22,14 +39,35 @@ struct gc_spec {
 };
 
 struct ui_case {
+	struct fb_videomode vm;
 	struct gc_spec ui;
 	unsigned int clr;
 	char srcfile[64];
 };
 
 struct ui_case ui_cases[] = {
+{
+	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
+	{
+		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
+		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
+		1, 1,
+	},
+	1, "32_8888_1920x1080.bmp"
+},
+
 /** Display part **/
 {
+	{
+		/* 640x480 25175000 Hz */
+		NULL,60, 640, 480, 39721, 16, 48, 10, 33, 96, 2,
+		0,FB_VMODE_NONINTERLACED
+	},
 	{
 		{0, 640, 480, 0, 0, {0,0,640,480}},
 		{0, 640, 480, 0, 0, {0,0,640,480}},
@@ -39,6 +77,11 @@ struct ui_case ui_cases[] = {
 },
 {
 	{
+		/* 640x480 25175000 Hz */
+		NULL,60, 640, 480, 39721, 16, 48, 10, 33, 96, 2,
+		0,FB_VMODE_NONINTERLACED
+	},
+	{
 		{0, 640, 480, 0, 0, {0,0,640,480}},
 		{0, 640, 480, 0, 0, {0,0,640,480}},
 		1, 0
@@ -46,6 +89,11 @@ struct ui_case ui_cases[] = {
 	1, "16_565_640x480.bmp"
 },
 {
+	{
+		/* 640x480 25175000 Hz */
+		NULL,60, 640, 480, 39721, 16, 48, 10, 33, 96, 2,
+		0,FB_VMODE_NONINTERLACED
+	},
 	{
 		{0, 640, 480, 0, 0, {0,0,640,480}},
 		{0, 640, 480, 0, 0, {0,0,640,480}},
@@ -55,13 +103,23 @@ struct ui_case ui_cases[] = {
 },
 {
 	{
-		{0, 1024, 768, 0, 0, {0,0,1024,768}},
-		{0, 1024, 768, 0, 0, {0,0,1024,768}},
-		1, 0,
+		/* 1024x768 @ 87 Hz interlaced, 35.5 kHz hsync */
+		NULL, 60, 1024, 768, 22271, 56, 24, 33, 8, 160, 8,
+		0, FB_VMODE_INTERLACED
 	},
-	1, "24_888_1024x768.bmp"
+	{
+		{0, 1024, 768, 0, 0, {0,0,1024,768}},
+		{0, 1024, 768, 0, 0, {0,0,1024,768}},
+		1, 1,
+	},
+	1, "32_8888_1024x768.bmp"
 },
 {
+	{
+		/* 1024x768 @ 87 Hz interlaced, 35.5 kHz hsync */
+		NULL, 60, 1024, 768, 22271, 56, 24, 33, 8, 160, 8,
+		0, FB_VMODE_INTERLACED
+	},
 	{
 		{0, 1024, 768, 0, 0, {0,0,1024,768}},
 		{0, 1024, 768, 0, 0, {0,0,1024,768}},
@@ -71,6 +129,11 @@ struct ui_case ui_cases[] = {
 },
 {
 	{
+		/* 1024x768 @ 87 Hz interlaced, 35.5 kHz hsync */
+		NULL, 60, 1024, 768, 22271, 56, 24, 33, 8, 160, 8,
+		0, FB_VMODE_INTERLACED
+	},
+	{
 		{0, 1024, 768, 0, 0, {0,0,1024,768}},
 		{0, 1024, 768, 0, 0, {0,0,1024,768}},
 		1, 0,
@@ -79,13 +142,25 @@ struct ui_case ui_cases[] = {
 },
 {
 	{
-		{0, 1280, 720, 0, 0, {0,0,1280,720}},
-		{0, 1280, 720, 0, 0, {0,0,1280,720}},
-		1, 0,
+		/* 1280x720 @ 60 Hz add by weixing */
+		NULL, 60, 1280, 720, 13468, 220, 110, 20, 5, 40, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
 	},
-	1, "24_888_1280x720.bmp"
+	{
+		{0, 1280, 720, 0, 0, {0,0,1280,720}},
+		{0, 1280, 720, 0, 0, {0,0,1280,720}},
+		1, 1,
+	},
+	1, "32_8888_1280x720.bmp"
 },
 {
+	{
+		/* 1280x720 @ 60 Hz add by weixing */
+		NULL, 60, 1280, 720, 13468, 220, 110, 20, 5, 40, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
 	{
 		{0, 1280, 720, 0, 0, {0,0,1280,720}},
 		{0, 1280, 720, 0, 0, {0,0,1280,720}},
@@ -95,6 +170,12 @@ struct ui_case ui_cases[] = {
 },
 {
 	{
+		/* 1280x720 @ 60 Hz */
+		NULL, 60, 1280, 720, 13468, 220, 110, 20, 5, 40, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
+	{
 		{0, 1280, 720, 0, 0, {0,0,1280,720}},
 		{0, 1280, 720, 0, 0, {0,0,1280,720}},
 		1, 0,
@@ -102,6 +183,12 @@ struct ui_case ui_cases[] = {
 	1, "16_555_1280x720.bmp"
 },
 {
+	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
 	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
@@ -111,6 +198,12 @@ struct ui_case ui_cases[] = {
 },
 {
 	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
+	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		1, 0,
@@ -118,6 +211,12 @@ struct ui_case ui_cases[] = {
 	1, "16_565_1920x1080.bmp"
 },
 {
+	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
 	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
@@ -129,6 +228,12 @@ struct ui_case ui_cases[] = {
 /* Source: 1920x1080 rgb888 */
 {
 	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
+	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1920*0.8, 1080*0.8, 0, 0, {1920*0.1,1080*0.1,1920*0.9,1080*0.9}},
 		1, 1,
@@ -136,6 +241,12 @@ struct ui_case ui_cases[] = {
 	1, "24_888_1920x1080.bmp"
 },
 {
+	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
 	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1280*0.8, 720*0.8, 0, 0, {1280*0.1,720*0.1,1280*0.9,720*0.9}},
@@ -145,6 +256,12 @@ struct ui_case ui_cases[] = {
 },
 {
 	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
+	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1920*0.9, 1080*0.9, 0, 0, {1920*0.05,1080*0.05,1920*0.95,1080*0.95}},
 		1, 1,
@@ -152,6 +269,12 @@ struct ui_case ui_cases[] = {
 	1, "24_888_1920x1080.bmp"
 },
 {
+	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
 	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1280*0.9, 720*0.9, 0, 0, {1280*0.05,720*0.05,1280*0.95,720*0.95}},
@@ -161,6 +284,12 @@ struct ui_case ui_cases[] = {
 },
 {
 	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
+	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1920*0.95, 1080*0.95, 0, 0, {1920,1080*0.05,1920*0.95,1080}},
 		1, 1,
@@ -168,6 +297,12 @@ struct ui_case ui_cases[] = {
 	1, "24_888_1920x1080.bmp"
 },
 {
+	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
 	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1280*0.95, 720*0.95, 0, 0, {1280,720*0.05,1280*0.95,720}},
@@ -177,6 +312,12 @@ struct ui_case ui_cases[] = {
 },
 {
 	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
+	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1920*0.9, 1080*0.9, 0, 0, {1920*0.1,1080,1920,1080*0.9}},
 		1, 1,
@@ -184,6 +325,12 @@ struct ui_case ui_cases[] = {
 	1, "24_888_1920x1080.bmp"
 },
 {
+	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
 	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1280*0.9, 720*0.9, 0, 0, {1280*0.1,720,1280,720*0.9}},
@@ -193,6 +340,12 @@ struct ui_case ui_cases[] = {
 },
 {
 	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
+	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1920*0.95, 1080*0.98, 0, 0, {1920*0.05,1080,1920,1080*0.98}},
 		1, 1,
@@ -200,6 +353,12 @@ struct ui_case ui_cases[] = {
 	1, "24_888_1920x1080.bmp"
 },
 {
+	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
 	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1280*0.95, 720*0.98, 0, 0, {1280*0.05,720,1280,720*0.98}},
@@ -209,6 +368,12 @@ struct ui_case ui_cases[] = {
 },
 {
 	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
+	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1920*0.9, 1080*0.9, 0, 0, {1920,1080*0.1,1920*0.9,1080}},
 		1, 1,
@@ -216,6 +381,12 @@ struct ui_case ui_cases[] = {
 	1, "24_888_1920x1080.bmp"
 },
 {
+	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
 	{
 		{0, 1920, 1080, 0, 0, {0,0,1920,1080}},
 		{0, 1280*0.9, 720*0.9, 0, 0, {1280,720*0.1,1280*0.9,720}},
@@ -292,6 +463,12 @@ struct ui_case ui_cases[] = {
 /** End of ui_cases **/
 {
 	{
+		/* 1920x1080 @ 60 Hz */
+		NULL, 60, 1920, 1080, 6734, 148, 88, 4, 36, 44, 5,
+		FB_SYNC_HOR_HIGH_ACT | FB_SYNC_VERT_HIGH_ACT,
+		FB_VMODE_NONINTERLACED
+	},
+	{
 		{-1, -1, -1, -1, -1, {-1,-1,-1,-1}},
 		{-1, -1, -1, -1, -1, {-1,-1,-1,-1}},
 		-1, -1,
@@ -302,6 +479,7 @@ struct ui_case ui_cases[] = {
 
 
 struct vi_case {
+	//struct fb_videomode vm;
 	struct gc_spec vi;
 	unsigned int clr;
 	char srcfile[64];
