@@ -28,11 +28,13 @@
 #define FB_CAP_PARAM _IOW('F', 0x27, struct gc_spec)
 #define FB_RESET_PARAM _IOW('F', 0x28, struct gc_spec)
 #define FB_PRI_REGS _IOW('F', 0x29, struct gc_spec)
+#define FB_SET_ALPHA _IOW('F', 0x2a, unsigned int)
+#define FB_SET_PCLK _IOW('F', 0x2b, unsigned int)
 #define FB_UI_MEM_SIZE 0x2000000
 #define FB_VID_MEM_SIZE 0x1000000
 #define FB_CAP_MEM_SIZE 0x1000000
 
-#define DEBUG
+//#define DEBUG
 
 /*** typedef ***/
 struct bmp_header {
@@ -143,7 +145,6 @@ int get_screen_info()
 
 int set_screen_info()
 {
-/*
 	if (vi.bits_per_pixel == 16) {
 		vi.bits_per_pixel = 32;
 		vi.red.offset = 24;
@@ -168,7 +169,6 @@ int set_screen_info()
 	if (ioctl(fd, FBIOPUT_VSCREENINFO, &vi) < 0) {
 		printf("[E:xiehang] Put vScreenInfo failed\n");
 	}
-*/
 	return 0;
 }
 
@@ -600,6 +600,51 @@ int load_bitmap(char *path, void *buffer)
 	return 0;
 }
 
+int load_yuv(char *path, void *buffer)
+{
+	FILE *fpyuv;
+	char *buf = buffer;
+	int i;
+
+	if (path == NULL) {
+		for (i=0; i<FB_VID_MEM_SIZE; i++) {
+			buf = 0;
+			buf++;
+		}
+	} else {
+		fpyuv = fopen(path, "rb");
+		if (fpyuv == NULL) {
+			printf("[E:xiehang] open %s failed\n", path);
+			return -1;
+		}
+		while (!feof(fpyuv)) {
+			fread(buf, 1, sizeof(char), fpyuv);
+			buf++;
+		}
+
+		fclose(fpyuv);
+	}
+
+	return 0;
+}
+
+int save_yuv(char *path, void *buffer)
+{
+	FILE *fpyuv;
+	char *buf = buffer;
+	int i;
+
+	fpyuv = fopen(path, "wb");
+	if (fpyuv == NULL) {
+		printf("[E:xiehang] open %s failed\n", path);
+		return -1;
+	}
+	fwrite(buf, 1, sizeof(char)*FB_VID_MEM_SIZE, fpyuv);
+
+	fclose(fpyuv);
+	return 0;
+}
+
 int save_output(char *path, void *buffer)
 {
 	FILE *fpout;
@@ -729,6 +774,26 @@ int set_resolution_ratio(struct fb_videomode *vm)
 	return 0;
 }
 
+int set_alpha(unsigned int alpha)
+{
+	unsigned int a = alpha;
+	if (ioctl(fd, FB_SET_ALPHA, &a) < 0) {
+		printf("[E:xiehang] ioctl FB_SET_ALPHA, failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+int set_pclk(unsigned int pclk)
+{
+	unsigned int p = pclk;
+	if (ioctl(fd, FB_SET_PCLK, &p) < 0) {
+		printf("[E:xiehang] ioctl FB_SET_PCLK, failed\n");
+		return -1;
+	}
+	return 0;
+}
+
 int ui_param(struct gc_spec *spec)
 {
 	if (ioctl(fd, FB_UI_PARAM, spec) < 0) {
@@ -751,8 +816,9 @@ int ui_process(int index)
 	if (load_bitmap(ui_cases[index].srcfile, ui_buffer)) return -1;
 
 	ui_param(&(ui_cases[index].ui));
+	set_pclk(ui_cases[index].vm.pixclock);
 	reset();
-	sleep(1);
+	sleep(2);
 
 	sprintf(outfile, "out_ui_case%d.bmp", index);
 #ifdef DEV_ANDROID
@@ -780,23 +846,32 @@ int vi_process(int index)
 {
 	char outfile[64];
 
-	if ( (vi_cases[index].clr) && (load_bitmap("black.bmp", vi_buffer)) ) return -1;
-	if (load_bitmap(vi_cases[index].srcfile, vi_buffer)) return -1;
+//	if (write_back(0)) return -1;
+//	sleep(1);
 
-	set_resolution_ratio(&(ui_cases[index].vm));
+	set_resolution_ratio(&(vi_cases[index].vm));
+
+	if (get_screen_info()) return 2;
+	dump_screen_info();
+
+	if ( (vi_cases[index].clr) && (load_yuv(NULL, vi_buffer)) ) return -1;
+	if (load_yuv(vi_cases[index].srcfile, vi_buffer)) return -1;
+
 	vi_param(&(vi_cases[index].vi));
+	set_pclk(vi_cases[index].vm.pixclock);
+	set_alpha(0xff0000);
 	reset();
-	sleep(1);
+	sleep(2);
 
 	sprintf(outfile, "out_vid_case%d.bmp", index);
 #ifdef DEV_ANDROID
 	if (save_output(outfile, vi_buffer)) return -1;
 #else
 	if (write_back(0)) return -1;
+	sleep(1);
 	if (save_output(outfile, wb_buffer[wb_cur])) return -1;
 	//wb_cur = 1-wb_cur;
 #endif
-	sleep(1);
 
 	return 0;
 }
@@ -805,20 +880,32 @@ int uv_process(int index)
 {
 	char outfile[64];
 
+//	if (write_back(0)) return -1;
+//	sleep(1);
+
+	set_resolution_ratio(&(uv_cases[index].vm));
+	set_pclk(uv_cases[index].vm.pixclock);
+
+	if (get_screen_info()) return 2;
+	dump_screen_info();
+
 	if ( (uv_cases[index].ui_clr) && (load_bitmap("black.bmp", ui_buffer)) ) return -1;
-	if ( (uv_cases[index].vi_clr) && (load_bitmap("black.bmp", vi_buffer)) ) return -1;
+	if ( (uv_cases[index].vi_clr) && (load_yuv(NULL, vi_buffer)) ) return -1;
 	if (load_bitmap(uv_cases[index].ui_srcfile, ui_buffer)) return -1;
-	if (load_bitmap(uv_cases[index].vi_srcfile, vi_buffer)) return -1;
+	if (load_yuv(uv_cases[index].vi_srcfile, vi_buffer)) return -1;
 	sleep(1);
 
 	ui_param(&(uv_cases[index].ui));
 	vi_param(&(uv_cases[index].vi));
-	sleep(1);
+	set_alpha(0x7f7f00);
+	reset();
+	sleep(2);
 
 	sprintf(outfile, "out_uv_case%d.bmp", index);
+	if (write_back(0)) return -1;
+	sleep(1);
 	if (save_output(outfile, wb_buffer[wb_cur])) return -1;
 	//wb_cur = 1-wb_cur;
-	sleep(1);
 
 	return 0;
 }
@@ -851,11 +938,11 @@ int main(int argc, char *argv[])
 
 	if (get_screen_info()) return 2;
 
-	dump_screen_info();
+//	dump_screen_info();
 
 	if (create_memory_map()) return 3;
 
-	if (set_screen_info()) return 4;
+//	if (set_screen_info()) return 4;
 
 	if (!strcmp(argv[1], "UI"))		action = ACTION_UI;
 	else if (!strcmp(argv[1], "VIDEO"))	action = ACTION_VIDEO;
@@ -958,13 +1045,13 @@ int main(int argc, char *argv[])
 	}
 	else if (action == ACTION_CLEAR) {
 		if ( (argc>=3) && (strcmp(argv[2], "VIDEO") == 0) )
-			load_bitmap("black.bmp", vi_buffer);
+			load_yuv(NULL, vi_buffer);
 		else
 			load_bitmap("black.bmp", ui_buffer);
 	}
 	else if (action == ACTION_LOAD) {
 		if ( (argc>=3) && (strcmp(argv[2], "VIDEO") == 0) )
-			load_bitmap(argv[3], vi_buffer);
+			load_yuv(argv[3], vi_buffer);
 		else
 			load_bitmap(argv[3], ui_buffer);
 	}
