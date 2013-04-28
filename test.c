@@ -31,12 +31,13 @@
 #define FB_PRI_REGS _IOW('F', 0x29, struct gc_spec)
 #define FB_SET_ALPHA _IOW('F', 0x2a, unsigned int)
 #define FB_SET_PCLK _IOW('F', 0x2b, unsigned int)
-#define FB_GET_INTSTAT _IOR('F', 0x2c, unsigned int)
+#define FB_GET_INTSTAT _IOR('F', 0x2c, unsigned int*)
+#define FB_SET_VFORMAT _IOW('F', 0x2d, unsigned int)
 #define FB_UI_MEM_SIZE 0x2000000
 #define FB_VID_MEM_SIZE 0x1000000
 #define FB_CAP_MEM_SIZE 0x1000000
 
-//#define DEBUG
+#define DEBUG
 
 /*** typedef ***/
 struct bmp_header {
@@ -72,6 +73,7 @@ FILE *fpbmp;
 struct bmp_header bmp_header;
 struct dib_header dib_header;
 
+char logfile[256];
 FILE *fplog;
 
 /*** functions ***/
@@ -818,9 +820,29 @@ int ui_param(struct gc_spec *spec)
 	return 0;
 }
 
+int get_intstat(unsigned int *stat)
+{
+	if (ioctl(fd, FB_GET_INTSTAT, stat) < 0) {
+		printf("[E:xiehang] ioctl FB_GET_INTSTAT failed\n");
+		return -1;
+	}
+	return 0;
+}
+
+int set_video_format(unsigned int format)
+{
+	unsigned int f = format;
+	if (ioctl(fd, FB_SET_VFORMAT, &format) < 0) {
+		printf("[E:xiehang] ioctl FB_SET_VFORMAT failed\n");
+		return -1;
+	}
+	return 0;
+}
+
 int ui_process(int index)
 {
 	char outfile[64];
+	unsigned int intstat;
 
 	set_resolution_ratio(&(ui_cases[index].vm));
 
@@ -843,6 +865,10 @@ int ui_process(int index)
 	if (save_output(outfile, wb_buffer[wb_cur])) return -1;
 	//wb_cur = 1-wb_cur;
 #endif
+	get_intstat(&intstat);
+	fplog = fopen(logfile, "a");
+	fprintf(fplog, "case%d intstat: 0x%x\n", index, intstat);
+	fclose(fplog);
 	sleep(1);
 
 	return 0;
@@ -860,6 +886,7 @@ int vi_param(struct gc_spec *spec)
 int vi_process(int index)
 {
 	char outfile[64];
+	unsigned int intstat;
 
 //	if (write_back(0)) return -1;
 //	sleep(1);
@@ -887,6 +914,11 @@ int vi_process(int index)
 	if (save_output(outfile, wb_buffer[wb_cur])) return -1;
 	//wb_cur = 1-wb_cur;
 #endif
+	get_intstat(&intstat);
+	fplog = fopen(logfile, "a");
+	fprintf(fplog, "case%d intstat: 0x%x\n", index, intstat);
+	fclose(fplog);
+	sleep(1);
 
 	return 0;
 }
@@ -894,12 +926,14 @@ int vi_process(int index)
 int uv_process(int index)
 {
 	char outfile[64];
+	unsigned int intstat;
 
 //	if (write_back(0)) return -1;
 //	sleep(1);
 
 	set_resolution_ratio(&(uv_cases[index].vm));
 	set_pclk(uv_cases[index].vm.pixclock);
+	set_video_format(uv_cases[index].format);
 
 	if (get_screen_info()) return 2;
 	dump_screen_info();
@@ -921,6 +955,11 @@ int uv_process(int index)
 	sleep(1);
 	if (save_output(outfile, wb_buffer[wb_cur])) return -1;
 	//wb_cur = 1-wb_cur;
+	get_intstat(&intstat);
+	fplog = fopen(logfile, "a");
+	fprintf(fplog, "case%d intstat: 0x%x\n", index, intstat);
+	fclose(fplog);
+	sleep(1);
 
 	return 0;
 }
@@ -946,19 +985,14 @@ int main(int argc, char *argv[])
 #endif
 	if (ret < 0) return -1;
 
-	int i=0;
-	sprintf(outfile, "out%d.log", i);
-	fplog = fopen(outfile, "a");
+	i=0;
+	sprintf(logfile, "out%d.log", i);
+	fplog = fopen(logfile, "r");
 	while (fplog != NULL) {
 		fclose(fplog);
 		i++;
-		sprintf(outfile, "out%d.log", i);
-		fplog = fopen(outfile, "a");
-	}
-	fplog = fopen(outfile, "w");
-	if (fplog == NULL) {
-		close(fd);
-		return -1;
+		sprintf(logfile, "out%d.log", i);
+		fplog = fopen(logfile, "r");
 	}
 
 	if (get_screen_info()) goto out;
@@ -1121,6 +1155,9 @@ int main(int argc, char *argv[])
 		i = atoi(argv[3]);
 		set_resolution_ratio(&(offset_cases[i].vm));
 		set_pclk(offset_cases[i].vm.pixclock);
+		if ( (uilayer) && (vilayer) ) set_alpha(0x7f7f00);
+		else if (uilayer) set_alpha(0x00ff00);
+		else if (vilayer) set_alpha(0xff0000);
 		if (get_screen_info()) goto out;
 		if (uilayer) {
 			if ( (offset_cases[i].ui_clr) && (load_bitmap(NULL, ui_buffer)) ) goto out;
@@ -1141,25 +1178,39 @@ int main(int argc, char *argv[])
 			if (save_output(outfile, wb_buffer[wb_cur])) continue;
 			//wb_cur = 1-wb_cur;
 			get_intstat(&intstat);
+			fplog = fopen(logfile, "a");
 			fprintf(fplog, "case%d intstatus: 0x%x\n", j, intstat);
+			fclose(fplog);
 			sleep(1);
-			offset_cases[i].ui.dst.rect.left   += 8;
-			offset_cases[i].ui.dst.rect.top    += 8;
-			offset_cases[i].ui.dst.rect.right  += 8;
-			offset_cases[i].ui.dst.rect.bottom += 8;
-			offset_cases[i].vi.dst.rect.left   += 8;
-			offset_cases[i].vi.dst.rect.top    += 8;
-			offset_cases[i].vi.dst.rect.right  += 8;
-			offset_cases[i].vi.dst.rect.bottom += 8;
+			if (uilayer) {
+				offset_cases[i].ui.dst.rect.left   += 8;
+				offset_cases[i].ui.dst.rect.top    += 8;
+/*
+				offset_cases[i].ui.dst.rect.right  += 8;
+				offset_cases[i].ui.dst.rect.bottom += 8;
+*/
+				offset_cases[i].ui.dst.width       -= 8;
+				offset_cases[i].ui.dst.height      -= 8;
+			}
+			if (vilayer) {
+				offset_cases[i].vi.dst.rect.left   += 8;
+				offset_cases[i].vi.dst.rect.top    += 8;
+/*
+				offset_cases[i].vi.dst.rect.right  += 8;
+				offset_cases[i].vi.dst.rect.bottom += 8;
+*/
+				offset_cases[i].vi.dst.width       -= 8;
+				offset_cases[i].vi.dst.height      -= 8;
+			}
 			j++;
-		} while ( (offset_cases[i].ui.dst.rect.left < offset_cases[i].vm.xres) &&
+		} while ( (j<5) &&
+			  (offset_cases[i].ui.dst.rect.left < offset_cases[i].vm.xres) &&
 			  (offset_cases[i].ui.dst.rect.top < offset_cases[i].vm.yres) &&
 			  (offset_cases[i].vi.dst.rect.left < offset_cases[i].vm.xres) &&
 			  (offset_cases[i].vi.dst.rect.top < offset_cases[i].vm.yres) );
 	}
 
 out:
-	fclose(fplog);
 	close(fd);
 	return 0;
 }
