@@ -19,6 +19,7 @@
 #define ACTION_PRI_REGS 	0x10a
 #define ACTION_OFFSET		0x10b
 #define ACTION_WRITEBACKC	0x110
+#define ACTION_PS		0x111
 
 #define BI_RGB		0
 #define BI_BITFIELDS	3
@@ -33,6 +34,7 @@
 #define FB_SET_PCLK _IOW('F', 0x2b, unsigned int)
 #define FB_GET_INTSTAT _IOR('F', 0x2c, unsigned int*)
 #define FB_SET_VFORMAT _IOW('F', 0x2d, unsigned int)
+#define FB_UV_PS _IOW('F', 0x2f, unsigned int) //cgl
 #define FB_UI_MEM_SIZE 0x2000000
 #define FB_VID_MEM_SIZE 0x1000000
 #define FB_CAP_MEM_SIZE 0x1000000
@@ -75,6 +77,8 @@ struct dib_header dib_header;
 
 char logfile[256];
 FILE *fplog;
+
+int open_log_flag = 0;
 
 /*** functions ***/
 
@@ -189,47 +193,48 @@ int set_screen_info()
 #else
 int dump_screen_info()
 {
-	printf("[I:xiehang] vScreenInfo:\n");
-	printf("    xres=%d yres=%d\n", vi.xres, vi.yres);
-	printf("    xres_virtual=%d yres_virtual=%d\n", vi.xres_virtual, vi.yres_virtual);
-	printf("    xoffset=%d yoffset=%d\n", vi.xoffset, vi.yoffset);
-	printf("    bits_per_pixel=%d grayscale=%d\n", vi.bits_per_pixel, vi.grayscale);
-	printf("    fb_bitfield info:\n");
-	printf("        red:   offset=%d length=%d msb_right=%d\n", vi.red.offset, vi.red.length, vi.red.msb_right);
-	printf("        green: offset=%d length=%d msb_right=%d\n", vi.green.offset, vi.green.length, vi.green.msb_right);
-	printf("        blue:  offset=%d length=%d msb_right=%d\n", vi.blue.offset, vi.blue.length, vi.blue.msb_right);
-	printf("        transp:offset=%d length=%d msb_right=%d\n", vi.transp.offset, vi.transp.length, vi.transp.msb_right);
-	printf("    nonstd=%d\n", vi.nonstd);
-	printf("    activate=%d\n", vi.activate);
-	printf("    height=%d\n", vi.height);
-	printf("    width=%d\n", vi.width);
-	printf("    accel_flags=%d\n", vi.accel_flags);
-	printf("    pixclock=%d\n", vi.pixclock);
-	printf("    left_margin=%d\n", vi.left_margin);
-	printf("    right_margin=%d\n", vi.right_margin);
-	printf("    upper_margin=%d\n", vi.upper_margin);
-	printf("    lower_margin=%d\n", vi.lower_margin);
-	printf("    hsync_len=%d\n", vi.hsync_len);
-	printf("    vsync_len=%d\n", vi.vsync_len);
-	printf("    sync=%d\n", vi.sync);
-	printf("    vmode=%d\n", vi.vmode);
-	printf("    rotate=%d\n", vi.rotate);
+	if(open_log_flag == 1) {
+		printf("[I:xiehang] vScreenInfo:\n");
+		printf("    xres=%d yres=%d\n", vi.xres, vi.yres);
+		printf("    xres_virtual=%d yres_virtual=%d\n", vi.xres_virtual, vi.yres_virtual);
+		printf("    xoffset=%d yoffset=%d\n", vi.xoffset, vi.yoffset);
+		printf("    bits_per_pixel=%d grayscale=%d\n", vi.bits_per_pixel, vi.grayscale);
+		printf("    fb_bitfield info:\n");
+		printf("        red:   offset=%d length=%d msb_right=%d\n", vi.red.offset, vi.red.length, vi.red.msb_right);
+		printf("        green: offset=%d length=%d msb_right=%d\n", vi.green.offset, vi.green.length, vi.green.msb_right);
+		printf("        blue:  offset=%d length=%d msb_right=%d\n", vi.blue.offset, vi.blue.length, vi.blue.msb_right);
+		printf("        transp:offset=%d length=%d msb_right=%d\n", vi.transp.offset, vi.transp.length, vi.transp.msb_right);
+		printf("    nonstd=%d\n", vi.nonstd);
+		printf("    activate=%d\n", vi.activate);
+		printf("    height=%d\n", vi.height);
+		printf("    width=%d\n", vi.width);
+		printf("    accel_flags=%d\n", vi.accel_flags);
+		printf("    pixclock=%d\n", vi.pixclock);
+		printf("    left_margin=%d\n", vi.left_margin);
+		printf("    right_margin=%d\n", vi.right_margin);
+		printf("    upper_margin=%d\n", vi.upper_margin);
+		printf("    lower_margin=%d\n", vi.lower_margin);
+		printf("    hsync_len=%d\n", vi.hsync_len);
+		printf("    vsync_len=%d\n", vi.vsync_len);
+		printf("    sync=%d\n", vi.sync);
+		printf("    vmode=%d\n", vi.vmode);
+		printf("    rotate=%d\n", vi.rotate);
 
-	printf("[I:xiehang] fScreenInfo:\n");
-	printf("    id=%s\n", fi.id);
-	printf("    smem_start=0x%x\n", fi.smem_start);
-	printf("    smem_len=0x%x\n", fi.smem_len);
-	printf("    type=%d\n", fi.type);
-	printf("    type_aux=%d\n", fi.type_aux);
-	printf("    visual=%d\n", fi.visual);
-	printf("    xpanstep=%d\n", fi.xpanstep);
-	printf("    ypanstep=%d\n", fi.ypanstep);
-	printf("    ywrapstep=%d\n", fi.ywrapstep);
-	printf("    line_length=%d\n", fi.line_length);
-	printf("    mmio_start=0x%x\n", fi.mmio_start);
-	printf("    mmio_len=%d\n", fi.mmio_len);
-	printf("    accel=%d\n", fi.accel);
-
+		printf("[I:xiehang] fScreenInfo:\n");
+		printf("    id=%s\n", fi.id);
+		printf("    smem_start=0x%x\n", fi.smem_start);
+		printf("    smem_len=0x%x\n", fi.smem_len);
+		printf("    type=%d\n", fi.type);
+		printf("    type_aux=%d\n", fi.type_aux);
+		printf("    visual=%d\n", fi.visual);
+		printf("    xpanstep=%d\n", fi.xpanstep);
+		printf("    ypanstep=%d\n", fi.ypanstep);
+		printf("    ywrapstep=%d\n", fi.ywrapstep);
+		printf("    line_length=%d\n", fi.line_length);
+		printf("    mmio_start=0x%x\n", fi.mmio_start);
+		printf("    mmio_len=%d\n", fi.mmio_len);
+		printf("    accel=%d\n", fi.accel);
+	}
 	return 0;
 }
 #endif
@@ -625,7 +630,7 @@ int load_yuv(char *path, void *buffer)
 
 	if (path == NULL) {
 		for (i=0; i<FB_VID_MEM_SIZE; i++) {
-			buf = 0;
+			*buf = 0;
 			buf++;
 		}
 	} else {
@@ -839,6 +844,19 @@ int set_video_format(unsigned int format)
 	return 0;
 }
 
+int uv_ptr_sw(unsigned int seq)
+{
+	unsigned int n = seq;
+	if (ioctl(fd, FB_UV_PS, &n) < 0) {
+		printf("[E:Xiehang]ioctl FB_UV_PS failed\n");
+		return -1;
+	}
+
+	return 0;
+
+}
+
+
 int ui_process(int index)
 {
 	char outfile[64];
@@ -980,6 +998,11 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
+	if(!strcmp(argv[argc - 1], "O")) {
+		open_log_flag = 1;
+
+	}
+
 #ifdef DEV_ANDROID
 	ret = open_framebuffer("/dev/graphics/fb0");
 #else
@@ -1017,6 +1040,7 @@ int main(int argc, char *argv[])
 	else if (!strcmp(argv[1], "RESET"))	action = ACTION_RESET;
 	else if (!strcmp(argv[1], "PRI"))	action = ACTION_PRI_REGS;
 	else if (!strcmp(argv[1], "OFFSET"))	action = ACTION_OFFSET;
+	else if (!strcmp(argv[1], "PS"))	action = ACTION_PS;
 	else {
 		printf("[E:xiehang] Invalid args\n");
 		goto out;
@@ -1210,6 +1234,19 @@ int main(int argc, char *argv[])
 			  (offset_cases[i].ui.dst.rect.top < offset_cases[i].vm.yres) &&
 			  (offset_cases[i].vi.dst.rect.left < offset_cases[i].vm.xres) &&
 			  (offset_cases[i].vi.dst.rect.top < offset_cases[i].vm.yres) );
+	}else if(action == ACTION_PS) {
+		unsigned int i, seq;
+
+		for(seq = 1; seq < 4; seq++) {
+			//load_yuv(NULL, vi_buffer);
+			//load_bitmap(NULL, ui_buffer);
+			uv_ptr_sw(seq);
+			ui_process(seq);
+			vi_process(seq);
+			//uv_process(seq);
+			//load_yuv(NULL, vi_buffer);
+			//load_bitmap(NULL, ui_buffer);
+		}
 	}
 
 out:
