@@ -846,6 +846,7 @@ int ui_process(int index)
 
 	set_resolution_ratio(&(ui_cases[index].vm));
 
+	set_video_format(ui_cases[index].ui.src.format); //cgl
 	if (get_screen_info()) return 2;
 	dump_screen_info();
 
@@ -892,6 +893,7 @@ int vi_process(int index)
 //	sleep(1);
 
 	set_resolution_ratio(&(vi_cases[index].vm));
+	set_video_format(vi_cases[index].vi.src.format); //cgl
 
 	if (get_screen_info()) return 2;
 	dump_screen_info();
