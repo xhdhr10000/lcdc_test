@@ -33,7 +33,7 @@
 #define FB_SET_ALPHA _IOW('F', 0x2a, unsigned int)
 #define FB_SET_PCLK _IOW('F', 0x2b, unsigned int)
 #define FB_GET_INTSTAT _IOR('F', 0x2c, unsigned int*)
-#define FB_SET_VFORMAT _IOW('F', 0x2d, unsigned int)
+#define FB_SET_BPP _IOW('F', 0x2e, unsigned int)
 #define FB_UV_PS _IOW('F', 0x2f, unsigned int) //cgl
 #define FB_UI_MEM_SIZE 0x2000000
 #define FB_VID_MEM_SIZE 0x1000000
@@ -106,8 +106,8 @@ int help()
 	printf("    Reset lcdc\n");
 	printf("\nPRI:\n");
 	printf("    Print registers\n");
-	printf("\nOFFSET [UI|VIDEO|UV] [case]:\n");
-	printf("    Run offset case\n");
+	printf("\nOFFSET [UI|VIDEO|UV] [case] [times]:\n");
+	printf("    Run offset case, offset [times]\n");
 	return 0;
 }
 
@@ -367,14 +367,16 @@ int load_bitmap(char *path, void *buffer)
 			for (i=dib_header.bitmap_height-1; i>=0; i--)
 			for (j=0; j<dib_header.bitmap_width; j++) {
 				fread(&in, 1, sizeof(int), fpbmp);
-				out[i*vi.xres+j] = in;
+//				out[i*vi.xres+j] = in;
+				out[i*dib_header.bitmap_width+j] = in;
 			}
 		}
 		else if (dib_header.bits_per_pixel == 24) {
 			for (i=dib_header.bitmap_height-1; i>=0; i--) {
 				for (j=0; j<dib_header.bitmap_width; j++) {
 					fread(&in, 1, sizeof(char)*3, fpbmp);
-					out[i*vi.xres+j] = in;
+//					out[i*vi.xres+j] = in;
+					out[i*dib_header.bitmap_width+j] = in;
 				}
 				if (dib_header.bitmap_width*3%4 != 0)
 					fread(&in, 1, sizeof(char)*(dib_header.bitmap_width*3%4), fpbmp);
@@ -405,13 +407,13 @@ int load_bitmap(char *path, void *buffer)
 					fread(&in, 1, sizeof(char)*2, fpbmp);
 					in &= ~black;
 					if (g == 0x03e0) {// rgb555
-						out[i*vi.xres+j]  = ((in & r) << 6) << 3;
-						out[i*vi.xres+j] |= ((in & g) << 3) << 3;
+						out[i*dib_header.bitmap_width+j]  = ((in & r) << 6) << 3;
+						out[i*dib_header.bitmap_width+j] |= ((in & g) << 3) << 3;
 					} else {
-						out[i*vi.xres+j]  = ((in & r) << 5) << 3;
-						out[i*vi.xres+j] |= ((in & g) << 3) << 2;
+						out[i*dib_header.bitmap_width+j]  = ((in & r) << 5) << 3;
+						out[i*dib_header.bitmap_width+j] |= ((in & g) << 3) << 2;
 					}
-					out[i*vi.xres+j] |= (in & b) << 3;
+					out[i*dib_header.bitmap_width+j] |= (in & b) << 3;
 				}
 				if (dib_header.bitmap_width*2%4 != 0)
 					fread(&in, 1, sizeof(char)*(dib_header.bitmap_width*2%4), fpbmp);
@@ -421,6 +423,7 @@ int load_bitmap(char *path, void *buffer)
 			printf("[E:xiehang] bmp.bits_per_pixel=%d, not supported\n", dib_header.bits_per_pixel);
 		}
 	}
+/*
 	else if (vi.bits_per_pixel == 24) {
 		if (dib_header.bits_per_pixel == 32) {
 			for (i=dib_header.bitmap_height-1; i>=0; i--)
@@ -537,31 +540,32 @@ int load_bitmap(char *path, void *buffer)
 			printf("[E:xiehang] bmp.bits_per_pixel=%d, not supported\n", dib_header.bits_per_pixel);
 		}
 	}
+*/
 	else if (vi.bits_per_pixel == 16) {
 		if (dib_header.bits_per_pixel == 32) {
 			for (i=dib_header.bitmap_height-1; i>=0; i--)
 			for (j=0; j<dib_header.bitmap_width/2; j++) {
 				fread(&in, 1, sizeof(int), fpbmp);
-				out[i*vi.xres/2+j]  = (in & 0x00f80000) << 8;
-				out[i*vi.xres/2+j] |= (in & 0x0000fc00) << 11;
-				out[i*vi.xres/2+j] |= (in & 0x000000f8) << 13;
+				out[i*dib_header.bitmap_width/2+j]  = (in & 0x00f80000) << 8;
+				out[i*dib_header.bitmap_width/2+j] |= (in & 0x0000fc00) << 11;
+				out[i*dib_header.bitmap_width/2+j] |= (in & 0x000000f8) << 13;
 				fread(&in, 1, sizeof(int), fpbmp);
-				out[i*vi.xres/2+j] |= (in & 0x00f80000) >> 8;
-				out[i*vi.xres/2+j] |= (in & 0x0000fc00) >> 5;
-				out[i*vi.xres/2+j] |= (in & 0x000000f8) >> 3;
+				out[i*dib_header.bitmap_width/2+j] |= (in & 0x00f80000) >> 8;
+				out[i*dib_header.bitmap_width/2+j] |= (in & 0x0000fc00) >> 5;
+				out[i*dib_header.bitmap_width/2+j] |= (in & 0x000000f8) >> 3;
 			}
 		}
 		else if (dib_header.bits_per_pixel == 24) {
 			for (i=dib_header.bitmap_height-1; i>=0; i--) {
 				for (j=0; j<dib_header.bitmap_width/2; j++) {
 					fread(&in, 1, sizeof(char)*3, fpbmp);
-					out[i*vi.xres/2+j]  = (in & 0x00f80000) << 8;
-					out[i*vi.xres/2+j] |= (in & 0x0000fc00) << 11;
-					out[i*vi.xres/2+j] |= (in & 0x000000f8) << 13;
+					out[i*dib_header.bitmap_width/2+j]  = (in & 0x00f80000) << 8;
+					out[i*dib_header.bitmap_width/2+j] |= (in & 0x0000fc00) << 11;
+					out[i*dib_header.bitmap_width/2+j] |= (in & 0x000000f8) << 13;
 					fread(&in, 1, sizeof(char)*3, fpbmp);
-					out[i*vi.xres/2+j] |= (in & 0x00f80000) >> 8;
-					out[i*vi.xres/2+j] |= (in & 0x0000fc00) >> 5;
-					out[i*vi.xres/2+j] |= (in & 0x000000f8) >> 3;
+					out[i*dib_header.bitmap_width/2+j] |= (in & 0x00f80000) >> 8;
+					out[i*dib_header.bitmap_width/2+j] |= (in & 0x0000fc00) >> 5;
+					out[i*dib_header.bitmap_width/2+j] |= (in & 0x000000f8) >> 3;
 				}
 				if (dib_header.bitmap_width*3%4 != 0)
 					fread(&in, 1, sizeof(char)*(dib_header.bitmap_width*3%4), fpbmp);
@@ -592,20 +596,20 @@ int load_bitmap(char *path, void *buffer)
 					fread(&in, 1, sizeof(char)*2, fpbmp);
 					in &= ~black;
 					if (g == 0x3e0) { //rgb555
-						out[i*vi.xres/2+j]  = (in & r) << 17;
-						out[i*vi.xres/2+j] |= (in & g) << 17;
-						out[i*vi.xres/2+j] |= (in & b) << 16;
+						out[i*dib_header.bitmap_width/2+j]  = (in & r) << 17;
+						out[i*dib_header.bitmap_width/2+j] |= (in & g) << 17;
+						out[i*dib_header.bitmap_width/2+j] |= (in & b) << 16;
 					} else {
-						out[i*vi.xres/2+j]  = (in & 0xffff) << 16;
+						out[i*dib_header.bitmap_width/2+j]  = (in & 0xffff) << 16;
 					}
 					fread(&in, 1, sizeof(char)*2, fpbmp);
 					in &= ~black;
 					if (g == 0x3e0) {
-						out[i*vi.xres/2+j] |= (in & r) << 1;
-						out[i*vi.xres/2+j] |= (in & g) << 1;
-						out[i*vi.xres/2+j] |= (in & b);
+						out[i*dib_header.bitmap_width/2+j] |= (in & r) << 1;
+						out[i*dib_header.bitmap_width/2+j] |= (in & g) << 1;
+						out[i*dib_header.bitmap_width/2+j] |= (in & b);
 					} else {
-						out[i*vi.xres/2+j] |= (in & 0xffff);
+						out[i*dib_header.bitmap_width/2+j] |= (in & 0xffff);
 					}
 				}
 				if (dib_header.bitmap_width*2%4 != 0)
@@ -834,11 +838,22 @@ int get_intstat(unsigned int *stat)
 	return 0;
 }
 
-int set_video_format(unsigned int format)
+int set_bpp(unsigned int format)
 {
-	unsigned int f = format;
-	if (ioctl(fd, FB_SET_VFORMAT, &format) < 0) {
-		printf("[E:xiehang] ioctl FB_SET_VFORMAT failed\n");
+	switch (format) {
+	case RGB8888:
+		format = 32;
+		break;
+	case RGB555:
+		format = 15;
+		break;
+	case RGB565:
+		format = 16;
+		break;
+	}
+
+	if (ioctl(fd, FB_SET_BPP, &format) < 0) {
+		printf("[E:xiehang] ioctl FB_SET_BPP failed\n");
 		return -1;
 	}
 	return 0;
@@ -847,7 +862,7 @@ int set_video_format(unsigned int format)
 int uv_ptr_sw(unsigned int seq)
 {
 	unsigned int n = seq;
-	if (ioctl(fd, FB_UV_PS, &n) < 0) {
+	if (ioctl(fd, FB_UV_PS, &seq) < 0) {
 		printf("[E:Xiehang]ioctl FB_UV_PS failed\n");
 		return -1;
 	}
@@ -862,9 +877,10 @@ int ui_process(int index)
 	char outfile[64];
 	unsigned int intstat;
 
+	set_bpp(ui_cases[index].ui.src.format); //cgl
+	printf("[cgl_info] ui_case[%d].ui.src.format=%d\n", index, ui_cases[index].ui.src.format);
 	set_resolution_ratio(&(ui_cases[index].vm));
 
-	set_video_format(ui_cases[index].ui.src.format); //cgl
 	if (get_screen_info()) return 2;
 	dump_screen_info();
 
@@ -886,7 +902,7 @@ int ui_process(int index)
 #endif
 	get_intstat(&intstat);
 	fplog = fopen(logfile, "a");
-	fprintf(fplog, "case%d intstat: 0x%x\n", index, intstat);
+	fprintf(fplog, "ui case%d intstat: 0x%x\n", index, intstat);
 	fclose(fplog);
 	sleep(1);
 
@@ -910,8 +926,9 @@ int vi_process(int index)
 //	if (write_back(0)) return -1;
 //	sleep(1);
 
+	set_bpp(vi_cases[index].vi.src.format); //cgl
+	printf("[cgl_info] vi_case[%d].vi.src.format=%d\n", index, vi_cases[index].vi.src.format);
 	set_resolution_ratio(&(vi_cases[index].vm));
-	set_video_format(vi_cases[index].vi.src.format); //cgl
 
 	if (get_screen_info()) return 2;
 	dump_screen_info();
@@ -936,7 +953,7 @@ int vi_process(int index)
 #endif
 	get_intstat(&intstat);
 	fplog = fopen(logfile, "a");
-	fprintf(fplog, "case%d intstat: 0x%x\n", index, intstat);
+	fprintf(fplog, "vi case%d intstat: 0x%x\n", index, intstat);
 	fclose(fplog);
 	sleep(1);
 
@@ -951,9 +968,9 @@ int uv_process(int index)
 //	if (write_back(0)) return -1;
 //	sleep(1);
 
+	set_bpp(uv_cases[index].ui.src.format);
 	set_resolution_ratio(&(uv_cases[index].vm));
 	set_pclk(uv_cases[index].vm.pixclock);
-	set_video_format(uv_cases[index].format);
 
 	if (get_screen_info()) return 2;
 	dump_screen_info();
@@ -977,7 +994,7 @@ int uv_process(int index)
 	//wb_cur = 1-wb_cur;
 	get_intstat(&intstat);
 	fplog = fopen(logfile, "a");
-	fprintf(fplog, "case%d intstat: 0x%x\n", index, intstat);
+	fprintf(fplog, "compose case%d intstat: 0x%x\n", index, intstat);
 	fclose(fplog);
 	sleep(1);
 
@@ -1170,7 +1187,7 @@ int main(int argc, char *argv[])
 		pri_regs();
 	}
 	else if (action == ACTION_OFFSET) {
-		int uilayer=0, vilayer=0;
+		int uilayer=0, vilayer=0, times;
 		if (!strcmp(argv[2], "UI")) uilayer = 1;
 		else if (!strcmp(argv[2], "VIDEO")) vilayer = 1;
 		else if (!strcmp(argv[2], "UV")) uilayer = vilayer = 1;
@@ -1179,6 +1196,9 @@ int main(int argc, char *argv[])
 			goto out;
 		}
 		i = atoi(argv[3]);
+		i = (i<0)?0:i;
+		times = atoi(argv[4]);
+		times = (times<=0)?5:times;
 		set_resolution_ratio(&(offset_cases[i].vm));
 		set_pclk(offset_cases[i].vm.pixclock);
 		if ( (uilayer) && (vilayer) ) set_alpha(0x7f7f00);
@@ -1205,35 +1225,37 @@ int main(int argc, char *argv[])
 			//wb_cur = 1-wb_cur;
 			get_intstat(&intstat);
 			fplog = fopen(logfile, "a");
-			fprintf(fplog, "case%d intstatus: 0x%x\n", j, intstat);
+			fprintf(fplog, "offset case%d intstatus: 0x%x\n", j, intstat);
 			fclose(fplog);
 			sleep(1);
 			if (uilayer) {
 				offset_cases[i].ui.dst.rect.left   += 8;
 				offset_cases[i].ui.dst.rect.top    += 8;
-/*
+
 				offset_cases[i].ui.dst.rect.right  += 8;
 				offset_cases[i].ui.dst.rect.bottom += 8;
-*/
+/*
 				offset_cases[i].ui.dst.width       -= 8;
 				offset_cases[i].ui.dst.height      -= 8;
+*/
 			}
 			if (vilayer) {
 				offset_cases[i].vi.dst.rect.left   += 8;
 				offset_cases[i].vi.dst.rect.top    += 8;
-/*
+
 				offset_cases[i].vi.dst.rect.right  += 8;
 				offset_cases[i].vi.dst.rect.bottom += 8;
-*/
+/*
 				offset_cases[i].vi.dst.width       -= 8;
 				offset_cases[i].vi.dst.height      -= 8;
+*/
 			}
 			j++;
-		} while ( (j<5) &&
-			  (offset_cases[i].ui.dst.rect.left < offset_cases[i].vm.xres) &&
-			  (offset_cases[i].ui.dst.rect.top < offset_cases[i].vm.yres) &&
-			  (offset_cases[i].vi.dst.rect.left < offset_cases[i].vm.xres) &&
-			  (offset_cases[i].vi.dst.rect.top < offset_cases[i].vm.yres) );
+		} while ( (j<times) &&
+			  (offset_cases[i].ui.dst.rect.right < offset_cases[i].vm.xres) &&
+			  (offset_cases[i].ui.dst.rect.bottom < offset_cases[i].vm.yres) &&
+			  (offset_cases[i].vi.dst.rect.right < offset_cases[i].vm.xres) &&
+			  (offset_cases[i].vi.dst.rect.bottom < offset_cases[i].vm.yres) );
 	}else if(action == ACTION_PS) {
 		unsigned int i, seq;
 
