@@ -307,25 +307,27 @@ e_open_bmp_file:
 #else
 int dump_bmp_info()
 {
-	printf("[I:xiehang] bmp header info:\n");
-	printf("    size=%d\n", sizeof(bmp_header));
-	printf("    magic_number=0x%x\n", bmp_header.magic_number);
-	printf("    file_size=%d\n", bmp_header.file_size);
-	printf("    reserved=%d %d\n", bmp_header.reserved[0], bmp_header.reserved[1]);
-	printf("    offset=0x%x\n", bmp_header.offset);
+	if(open_log_flag == 1) {
+		printf("[I:xiehang] bmp header info:\n");
+		printf("    size=%d\n", sizeof(bmp_header));
+		printf("    magic_number=0x%x\n", bmp_header.magic_number);
+		printf("    file_size=%d\n", bmp_header.file_size);
+		printf("    reserved=%d %d\n", bmp_header.reserved[0], bmp_header.reserved[1]);
+		printf("    offset=0x%x\n", bmp_header.offset);
 
-	printf("[I:xiehang] dib header info:\n");
-	printf("    header_size=%d\n", dib_header.header_size);
-	printf("    bitmap_width=%d\n", dib_header.bitmap_width);
-	printf("    bitmap_height=%d\n", dib_header.bitmap_height);
-	printf("    num_color_planes=%d\n", dib_header.num_color_planes);
-	printf("    bits_per_pixel=%d\n", dib_header.bits_per_pixel);
-	printf("    compression=%d\n", dib_header.compression);
-	printf("    image_size=%d\n", dib_header.image_size);
-	printf("    horizontal_resolution=%d\n", dib_header.horizontal_resolution);
-	printf("    vertical_resolution=%d\n", dib_header.vertical_resolution);
-	printf("    num_colors_in_palette=%d\n", dib_header.num_colors_in_palette);
-	printf("    num_important_colors=%d\n", dib_header.num_important_colors);
+		printf("[I:xiehang] dib header info:\n");
+		printf("    header_size=%d\n", dib_header.header_size);
+		printf("    bitmap_width=%d\n", dib_header.bitmap_width);
+		printf("    bitmap_height=%d\n", dib_header.bitmap_height);
+		printf("    num_color_planes=%d\n", dib_header.num_color_planes);
+		printf("    bits_per_pixel=%d\n", dib_header.bits_per_pixel);
+		printf("    compression=%d\n", dib_header.compression);
+		printf("    image_size=%d\n", dib_header.image_size);
+		printf("    horizontal_resolution=%d\n", dib_header.horizontal_resolution);
+		printf("    vertical_resolution=%d\n", dib_header.vertical_resolution);
+		printf("    num_colors_in_palette=%d\n", dib_header.num_colors_in_palette);
+		printf("    num_important_colors=%d\n", dib_header.num_important_colors);
+	}
 
 	return 0;
 }
@@ -618,6 +620,8 @@ int load_bitmap(char *path, void *buffer)
 		} else {
 			printf("[E:xiehang] bmp.bits_per_pixel=%d, not supported\n", dib_header.bits_per_pixel);
 		}
+	}
+	else if (vi.bits_per_pixel == 15) {
 	} else {
 		printf("[E:xiehang] vScreenInfo.bits_per_pixel = %d\n", vi.bits_per_pixel);
 	}
@@ -733,6 +737,22 @@ int save_output(char *path, void *buffer)
 			*out |= (in[i*vi.xres/2+j] & b) >> 13;
 			out++;
 			*out  = ( (in[i*vi.xres/2+j]<<16) & r) >> 8;
+			*out |= ( (in[i*vi.xres/2+j]<<16) & g) >> 11;
+			*out |= ( (in[i*vi.xres/2+j]<<16) & b) >> 13;
+			out++;
+		}
+	}
+	else if (vi.bits_per_pixel == 15) {
+		r = 0x7c000000;
+		g = 0x03e00000;
+		b = 0x001f0000;
+		for (i=vi.yres-1; i>=0; i--)
+		for (j=0; j<vi.xres/2; j++) {
+			*out  = (in[i*vi.xres/2+j] & r) >> 7;
+			*out |= (in[i*vi.xres/2+j] & g) >> 10;
+			*out |= (in[i*vi.xres/2+j] & b) >> 13;
+			out++;
+			*out  = ( (in[i*vi.xres/2+j]<<16) & r) >> 7;
 			*out |= ( (in[i*vi.xres/2+j]<<16) & g) >> 11;
 			*out |= ( (in[i*vi.xres/2+j]<<16) & b) >> 13;
 			out++;
@@ -1199,6 +1219,7 @@ int main(int argc, char *argv[])
 		i = (i<0)?0:i;
 		times = atoi(argv[4]);
 		times = (times<=0)?5:times;
+		set_bpp(offset_cases[i].ui.src.format);
 		set_resolution_ratio(&(offset_cases[i].vm));
 		set_pclk(offset_cases[i].vm.pixclock);
 		if ( (uilayer) && (vilayer) ) set_alpha(0x7f7f00);
