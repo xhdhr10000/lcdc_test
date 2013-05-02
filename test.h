@@ -47,6 +47,7 @@ struct ui_case {
 	struct gc_spec ui;
 	unsigned int clr;
 	char srcfile[64];
+	unsigned int burst_length; //2,4,8,16
 };
 
 struct vi_case {
@@ -889,7 +890,7 @@ struct ui_case ui_cases[] = {
 struct vi_case vi_cases[] = {
 { //0
 	{
-		NULL,60, 320, 240, 3, 59, 32, 11, 11, 9, 2,
+		NULL,60, 320, 240, 3, 16, 16, 16, 5, 48, 1,
 		0,FB_VMODE_NONINTERLACED
 	},
 	{
@@ -1124,7 +1125,7 @@ struct vi_case vi_cases[] = {
 	},
 	{
 		{0, 1920, 1080, RGB8888, 0, {0,480,400,480+480}},
-		{0, 400, 480, 0, 0, {0,480,400,480+480}},
+		{0, 480, 400, 0, 0, {0,480,480,400+480}},
 		1, 1
 	},
 	1, "1920.yuv_semi"

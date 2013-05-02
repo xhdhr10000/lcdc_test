@@ -35,6 +35,7 @@
 #define FB_GET_INTSTAT _IOR('F', 0x2c, unsigned int*)
 #define FB_SET_BPP _IOW('F', 0x2e, unsigned int)
 #define FB_UV_PS _IOW('F', 0x2f, unsigned int) //cgl
+#define FB_SET_BURST_LEN _IOW('F', 0x30, unsigned int) //cgl
 #define FB_UI_MEM_SIZE 0x2000000
 #define FB_VID_MEM_SIZE 0x1000000
 #define FB_CAP_MEM_SIZE 0x1000000
@@ -967,6 +968,19 @@ int uv_ptr_sw(unsigned int seq)
 
 }
 
+int set_burst_len(unsigned int len)
+{
+	unsigned int i = 0;
+	if(len < 1 || len > 16) {
+		printf("[E:] burst length err!!\n");
+		return -1;
+	}
+	if(ioctl(fd, FB_SET_BURST_LEN, &len) < 0) {
+		printf("[E:] ioctl FB_SET_BURST_LEN failed!\n");
+		return -1;
+	}
+	return 0;
+}
 
 int ui_process(int index)
 {
@@ -976,6 +990,8 @@ int ui_process(int index)
 	set_bpp(ui_cases[index].ui.src.format); //cgl
 	printf("[cgl_info] ui_case[%d].ui.src.format=%d\n", index, ui_cases[index].ui.src.format);
 	set_resolution_ratio(&(ui_cases[index].vm));
+
+	set_burst_len(ui_cases[index].burst_length);
 
 	if (get_screen_info()) return 2;
 	dump_screen_info();
