@@ -1283,7 +1283,7 @@ int main(int argc, char *argv[])
 		pri_regs();
 	}
 	else if (action == ACTION_OFFSET) {
-		int uilayer=0, vilayer=0, times;
+		int uilayer=0, vilayer=0, times, xinc=8, yinc=8;
 		if (!strcmp(argv[2], "UI")) uilayer = 1;
 		else if (!strcmp(argv[2], "VIDEO")) vilayer = 1;
 		else if (!strcmp(argv[2], "UV")) uilayer = vilayer = 1;
@@ -1315,33 +1315,45 @@ int main(int argc, char *argv[])
 			if (uilayer) ui_param(&(offset_cases[i].ui));
 			if (vilayer) vi_param(&(offset_cases[i].vi));
 			reset();
-			sleep(2);
+			sleep(1);
 			sprintf(outfile, "out_offset%d.bmp", j);
 			if (write_back(0)) continue;
 			if (save_output(outfile, wb_buffer[wb_cur])) continue;
 			//wb_cur = 1-wb_cur;
 			get_intstat(&intstat);
 			fplog = fopen(logfile, "a");
-			fprintf(fplog, "offset case%d intstatus: 0x%x\n", j, intstat);
+			fprintf(fplog, "offset case%d intstatus:0x%x uipos:%d,%d,%d,%d vipos:%d,%d,%d,%d\n",
+				j, intstat, offset_cases[i].ui.dst.rect.left, offset_cases[i].ui.dst.rect.top,
+				offset_cases[i].ui.dst.rect.right, offset_cases[i].ui.dst.rect.bottom,
+				offset_cases[i].vi.dst.rect.left, offset_cases[i].vi.dst.rect.top,
+				offset_cases[i].vi.dst.rect.right, offset_cases[i].vi.dst.rect.bottom);
 			fclose(fplog);
 			sleep(1);
+			if ( ( (uilayer) && (((int)offset_cases[i].ui.dst.rect.left + xinc < 0) ||
+			     ((int)offset_cases[i].ui.dst.rect.right + xinc >= offset_cases[i].vm.xres)) ) ||
+			     ( (vilayer) && (((int)offset_cases[i].vi.dst.rect.left + xinc < 0) ||
+			     ((int)offset_cases[i].vi.dst.rect.right + xinc >= offset_cases[i].vm.xres)) ) )
+				xinc = -xinc;
+			if ( ( (uilayer) && (((int)offset_cases[i].ui.dst.rect.top + yinc < 0) ||
+			     ((int)offset_cases[i].ui.dst.rect.bottom + yinc >= offset_cases[i].vm.yres)) ) ||
+			     ( (vilayer) && (((int)offset_cases[i].vi.dst.rect.top + yinc < 0) ||
+			     ((int)offset_cases[i].vi.dst.rect.bottom + yinc >= offset_cases[i].vm.yres)) ) )
+				yinc = -yinc;
 			if (uilayer) {
-				offset_cases[i].ui.dst.rect.left   += 8;
-				offset_cases[i].ui.dst.rect.top    += 8;
-
-				offset_cases[i].ui.dst.rect.right  += 8;
-				offset_cases[i].ui.dst.rect.bottom += 8;
+				offset_cases[i].ui.dst.rect.left   += xinc;
+				offset_cases[i].ui.dst.rect.top    += yinc;
+				offset_cases[i].ui.dst.rect.right  += xinc;
+				offset_cases[i].ui.dst.rect.bottom += yinc;
 /*
 				offset_cases[i].ui.dst.width       -= 8;
 				offset_cases[i].ui.dst.height      -= 8;
 */
 			}
 			if (vilayer) {
-				offset_cases[i].vi.dst.rect.left   += 8;
-				offset_cases[i].vi.dst.rect.top    += 8;
-
-				offset_cases[i].vi.dst.rect.right  += 8;
-				offset_cases[i].vi.dst.rect.bottom += 8;
+				offset_cases[i].vi.dst.rect.left   += xinc;
+				offset_cases[i].vi.dst.rect.top    += yinc;
+				offset_cases[i].vi.dst.rect.right  += xinc;
+				offset_cases[i].vi.dst.rect.bottom += yinc;
 /*
 				offset_cases[i].vi.dst.width       -= 8;
 				offset_cases[i].vi.dst.height      -= 8;
