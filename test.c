@@ -971,10 +971,10 @@ int uv_ptr_sw(unsigned int seq)
 int set_burst_len(unsigned int len)
 {
 	unsigned int i = 0;
-	if(len < 1 || len > 16) {
-		printf("[E:] burst length err!!\n");
-		return -1;
-	}
+	//if(len < 1 || len > 16) {
+	//	printf("[E:] burst length err!!\n");
+	//	return -1;
+	//}
 	if(ioctl(fd, FB_SET_BURST_LEN, &len) < 0) {
 		printf("[E:] ioctl FB_SET_BURST_LEN failed!\n");
 		return -1;
