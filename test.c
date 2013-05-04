@@ -41,7 +41,7 @@
 #define FB_UI_MEM_SIZE 0x2000000
 #define FB_VID_MEM_SIZE 0x1000000
 #define FB_CAP_MEM_SIZE 0x1000000
-#define FB_CAP_MEM_OFFSET 0x400000
+#define FB_UPDATE_MEM_OFFSET 0x400000
 
 #define DEBUG
 
@@ -263,8 +263,8 @@ int create_memory_map(int action)
 
 		vi_buffer = ui_buffer + FB_UI_MEM_SIZE;
 		wb_buffer[0] = vi_buffer + FB_VID_MEM_SIZE;
-		wb_buffer[1] = wb_buffer[0] + FB_CAP_MEM_OFFSET;
-		wb_buffer[2] = wb_buffer[1] + FB_CAP_MEM_OFFSET;
+		wb_buffer[1] = wb_buffer[0] + FB_UPDATE_MEM_OFFSET;
+		wb_buffer[2] = wb_buffer[1] + FB_UPDATE_MEM_OFFSET;
 		break;
 	default:
 		ui_buffer = mmap(0, FB_UI_MEM_SIZE + FB_VID_MEM_SIZE + FB_CAP_MEM_SIZE*2, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -1019,8 +1019,9 @@ int ui_process(int index)
 
 	ui_param(&(ui_cases[index].ui));
 	set_pclk(ui_cases[index].vm.pixclock);
+	sleep(1);
 	reset();
-	sleep(2);
+	sleep(1);
 
 	sprintf(outfile, "out_ui_case%d.bmp", index);
 #ifdef DEV_ANDROID
@@ -1069,6 +1070,7 @@ int vi_process(int index)
 	vi_param(&(vi_cases[index].vi));
 	set_pclk(vi_cases[index].vm.pixclock);
 	set_alpha(0xff0000);
+	sleep(1);
 	reset();
 	sleep(1);
 
@@ -1415,8 +1417,12 @@ int main(int argc, char *argv[])
 		}
 	}
 	else if (action == ACTION_UPDATE) {
-		load_bitmap("32_8888_1280x720.bmp", ui_buffer);
-		load_yuv("1280x720_2_Y_UV20.yuv", vi_buffer);
+		load_bitmap("1280x720_1.bmp", ui_buffer);
+		load_bitmap("1280x720_2.bmp", ui_buffer+FB_UPDATE_MEM_OFFSET);
+		load_bitmap("1280x720_3.bmp", ui_buffer+FB_UPDATE_MEM_OFFSET*2);
+		load_yuv("1280x720_4_Y_UV20.yuv", vi_buffer);
+		load_yuv("1280x720_5_Y_UV20.yuv", vi_buffer+FB_UPDATE_MEM_OFFSET);
+		load_yuv("1280x720_6_Y_UV20.yuv", vi_buffer+FB_UPDATE_MEM_OFFSET*2);
 		set_alpha(0x7f7f00);
 		do_update();
 
