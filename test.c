@@ -777,11 +777,12 @@ int save_output(char *path, void *buffer)
 	memcpy(bmpout+sizeof(bmp_header), &dib_header, sizeof(dib_header));
 	in = buffer + vi.yoffset*(vi.xres*vi.bits_per_pixel/8);
 	out = (int*)(bmpout + bmp_header.offset);
-	if (vi.bits_per_pixel == 32) {
+//	if (vi.bits_per_pixel == 32) {
 		for (i=vi.yres-1; i>=0; i--)
 		for (j=0; j<vi.xres; j++)
 			*out++ = (in[i*vi.xres+j] | 0xff000000);
-	}
+//	}
+/*
 	else if (vi.bits_per_pixel == 24) {
 		for (i=vi.yres-1; i>=0; i--)
 		for (j=0; j<vi.xres*3/4; ) {
@@ -837,7 +838,7 @@ int save_output(char *path, void *buffer)
 	} else {
 		printf("[E:xiehang] Unsupported bpp:%d\n", vi.bits_per_pixel);
 	}
-
+*/
 	fpout = fopen(path, "wb");
 	if (fpout == NULL) {
 		printf("[E:xiehang] open %s failed\n", path);
@@ -1052,7 +1053,7 @@ int vi_process(int index)
 	set_pclk(vi_cases[index].vm.pixclock);
 	set_alpha(0xff0000);
 	reset();
-	sleep(2);
+	sleep(1);
 
 	sprintf(outfile, "out_vid_case%d.bmp", index);
 #ifdef DEV_ANDROID
