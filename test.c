@@ -18,6 +18,7 @@
 #define ACTION_RESET		0x109
 #define ACTION_PRI_REGS 	0x10a
 #define ACTION_OFFSET		0x10b
+#define ACTION_UPDATE		0x10c
 #define ACTION_WRITEBACKC	0x110
 #define ACTION_PS		0x111
 
@@ -36,9 +37,11 @@
 #define FB_SET_BPP _IOW('F', 0x2e, unsigned int)
 #define FB_UV_PS _IOW('F', 0x2f, unsigned int) //cgl
 #define FB_SET_BURST_LEN _IOW('F', 0x30, unsigned int) //cgl
+#define FB_UPDATE_TEST _IOW('F', 0x31, unsigned int)
 #define FB_UI_MEM_SIZE 0x2000000
 #define FB_VID_MEM_SIZE 0x1000000
 #define FB_CAP_MEM_SIZE 0x1000000
+#define FB_CAP_MEM_OFFSET 0x400000
 
 #define DEBUG
 
@@ -69,7 +72,7 @@ struct dib_header {
 int fd = -1;
 struct fb_var_screeninfo vi;
 struct fb_fix_screeninfo fi;
-void *ui_buffer, *vi_buffer, *wb_buffer[2];
+void *ui_buffer, *vi_buffer, *wb_buffer[3];
 int wb_cur = 0;
 
 FILE *fpbmp;
@@ -240,7 +243,7 @@ int dump_screen_info()
 }
 #endif
 
-int create_memory_map()
+int create_memory_map(int action)
 {
 #ifdef DEV_ANDROID
 	if (fi.smem_len <= 0) return -1;
@@ -250,26 +253,31 @@ int create_memory_map()
 		return -2;
 	}
 #else
-	ui_buffer = mmap(0, FB_UI_MEM_SIZE + FB_VID_MEM_SIZE + FB_CAP_MEM_SIZE*2, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-	if (ui_buffer == MAP_FAILED) {
-		printf("[E:xiehang] ui mmap failed\n");
-		return -2;
+	switch (action) {
+	case ACTION_UPDATE:
+		ui_buffer = mmap(0, FB_UI_MEM_SIZE + FB_VID_MEM_SIZE + FB_CAP_MEM_SIZE*2, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+		if (ui_buffer == MAP_FAILED) {
+			printf("[E:xiehang] ui mmap failed\n");
+			return -2;
+		}
+
+		vi_buffer = ui_buffer + FB_UI_MEM_SIZE;
+		wb_buffer[0] = vi_buffer + FB_VID_MEM_SIZE;
+		wb_buffer[1] = wb_buffer[0] + FB_CAP_MEM_OFFSET;
+		wb_buffer[2] = wb_buffer[1] + FB_CAP_MEM_OFFSET;
+		break;
+	default:
+		ui_buffer = mmap(0, FB_UI_MEM_SIZE + FB_VID_MEM_SIZE + FB_CAP_MEM_SIZE*2, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+		if (ui_buffer == MAP_FAILED) {
+			printf("[E:xiehang] ui mmap failed\n");
+			return -2;
+		}
+
+		vi_buffer = ui_buffer + FB_UI_MEM_SIZE;
+		wb_buffer[0] = vi_buffer + FB_VID_MEM_SIZE;
+		wb_buffer[1] = wb_buffer[0] + FB_CAP_MEM_SIZE;
+		break;
 	}
-/*
-	vi_buffer = mmap(0, FB_VID_MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, FB_UI_MEM_SIZE);
-	if (vi_buffer == MAP_FAILED) {
-		printf("[E:xiehang] vi mmap failed\n");
-		return -3;
-	}
-	wb_buffer = mmap(0, FB_CAP_MEM_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, FB_UI_MEM_SIZE+FB_VID_MEM_SIZE);
-	if (wb_buffer == MAP_FAILED) {
-		printf("[E:xiehang] wb mmap failed\n");
-		return -4;
-	}
-*/
-	vi_buffer = ui_buffer + FB_UI_MEM_SIZE;
-	wb_buffer[0] = vi_buffer + FB_VID_MEM_SIZE;
-	wb_buffer[1] = wb_buffer[0] + FB_CAP_MEM_SIZE;
 #endif
 	return 0;
 }
@@ -983,6 +991,15 @@ int set_burst_len(unsigned int len)
 	return 0;
 }
 
+int do_update()
+{
+	if (ioctl(fd, FB_UPDATE_TEST, NULL) < 0) {
+		printf("[E:xiehang] ioctl * failed!\n");
+		return -1;
+	}
+	return 0;
+}
+
 int ui_process(int index)
 {
 	char outfile[64];
@@ -1097,8 +1114,9 @@ int uv_process(int index)
 	ui_param(&(uv_cases[index].ui));
 	vi_param(&(uv_cases[index].vi));
 	set_alpha(0x7f7f00);
+	sleep(1);
 	reset();
-	sleep(2);
+	sleep(1);
 
 	sprintf(outfile, "out_uv_case%d.bmp", index);
 	if (write_back(0)) return -1;
@@ -1133,6 +1151,25 @@ int main(int argc, char *argv[])
 
 	}
 
+	if (!strcmp(argv[1], "UI"))		action = ACTION_UI;
+	else if (!strcmp(argv[1], "VIDEO"))	action = ACTION_VIDEO;
+	else if (!strcmp(argv[1], "UV"))	action = ACTION_UV;
+	else if (!strcmp(argv[1], "CAP"))	action = ACTION_CAPTURE;
+	else if (!strcmp(argv[1], "CLEAR"))	action = ACTION_CLEAR;
+	else if (!strcmp(argv[1], "LOAD"))	action = ACTION_LOAD;
+	else if (!strcmp(argv[1], "PARAM"))	action = ACTION_PARAM;
+	else if (!strcmp(argv[1], "WB"))	action = ACTION_WRITEBACK;
+	else if (!strcmp(argv[1], "WBC"))	action = ACTION_WRITEBACKC;
+	else if (!strcmp(argv[1], "RESET"))	action = ACTION_RESET;
+	else if (!strcmp(argv[1], "PRI"))	action = ACTION_PRI_REGS;
+	else if (!strcmp(argv[1], "OFFSET"))	action = ACTION_OFFSET;
+	else if (!strcmp(argv[1], "PS"))	action = ACTION_PS;
+	else if (!strcmp(argv[1], "UPDATE"))	action = ACTION_UPDATE;
+	else {
+		printf("[E:xiehang] Invalid args\n");
+		goto out;
+	}
+
 #ifdef DEV_ANDROID
 	ret = open_framebuffer("/dev/graphics/fb0");
 #else
@@ -1151,30 +1188,11 @@ int main(int argc, char *argv[])
 	}
 
 	if (get_screen_info()) goto out;
+	dump_screen_info();
 
-//	dump_screen_info();
-
-	if (create_memory_map()) goto out;
+	if (create_memory_map(action)) goto out;
 
 //	if (set_screen_info()) goto out;
-
-	if (!strcmp(argv[1], "UI"))		action = ACTION_UI;
-	else if (!strcmp(argv[1], "VIDEO"))	action = ACTION_VIDEO;
-	else if (!strcmp(argv[1], "UV"))	action = ACTION_UV;
-	else if (!strcmp(argv[1], "CAP"))	action = ACTION_CAPTURE;
-	else if (!strcmp(argv[1], "CLEAR"))	action = ACTION_CLEAR;
-	else if (!strcmp(argv[1], "LOAD"))	action = ACTION_LOAD;
-	else if (!strcmp(argv[1], "PARAM"))	action = ACTION_PARAM;
-	else if (!strcmp(argv[1], "WB"))	action = ACTION_WRITEBACK;
-	else if (!strcmp(argv[1], "WBC"))	action = ACTION_WRITEBACKC;
-	else if (!strcmp(argv[1], "RESET"))	action = ACTION_RESET;
-	else if (!strcmp(argv[1], "PRI"))	action = ACTION_PRI_REGS;
-	else if (!strcmp(argv[1], "OFFSET"))	action = ACTION_OFFSET;
-	else if (!strcmp(argv[1], "PS"))	action = ACTION_PS;
-	else {
-		printf("[E:xiehang] Invalid args\n");
-		goto out;
-	}
 
 	if (action == ACTION_UI) {
 		if (argc > 2) {
@@ -1395,6 +1413,19 @@ int main(int argc, char *argv[])
 			//load_yuv(NULL, vi_buffer);
 			//load_bitmap(NULL, ui_buffer);
 		}
+	}
+	else if (action == ACTION_UPDATE) {
+		load_bitmap("32_8888_1280x720.bmp", ui_buffer);
+		load_yuv("1280x720_2_Y_UV20.yuv", vi_buffer);
+		set_alpha(0x7f7f00);
+		do_update();
+
+		for (i=0; i<3; i++) {
+			sprintf(outfile, "out_update%d.bmp", wb_cur);
+			save_output(outfile, wb_buffer[wb_cur]);
+			wb_cur = (wb_cur+1)%3;
+		}
+
 	}
 
 out:
