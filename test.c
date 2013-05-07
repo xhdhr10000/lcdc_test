@@ -1009,7 +1009,7 @@ int ui_process(int index)
 	printf("[cgl_info] ui_case[%d].ui.src.format=%d\n", index, ui_cases[index].ui.src.format);
 	set_resolution_ratio(&(ui_cases[index].vm));
 
-	set_burst_len(ui_cases[index].burst_length);
+	//set_burst_len(ui_cases[index].burst_length);
 
 	if (get_screen_info()) return 2;
 	dump_screen_info();
@@ -1017,8 +1017,10 @@ int ui_process(int index)
 	if ( (ui_cases[index].clr) && (load_bitmap(NULL, ui_buffer)) ) return -1;
 	if (load_bitmap(ui_cases[index].srcfile, ui_buffer)) return -1;
 
+	vi_param(&(vi_close_layer.vi));
 	ui_param(&(ui_cases[index].ui));
 	set_pclk(ui_cases[index].vm.pixclock);
+	set_alpha(0xff00);
 	sleep(1);
 	reset();
 	sleep(1);
@@ -1067,6 +1069,7 @@ int vi_process(int index)
 	if ( (vi_cases[index].clr) && (load_yuv(NULL, vi_buffer)) ) return -1;
 	if (load_yuv(vi_cases[index].srcfile, vi_buffer)) return -1;
 
+	ui_param(&(ui_close_layer.ui));
 	vi_param(&(vi_cases[index].vi));
 	set_pclk(vi_cases[index].vm.pixclock);
 	set_alpha(0xff0000);
