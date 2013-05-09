@@ -19,6 +19,7 @@
 #define ACTION_PRI_REGS 	0x10a
 #define ACTION_OFFSET		0x10b
 #define ACTION_UPDATE		0x10c
+#define ACTION_RANDOM		0x10d
 #define ACTION_WRITEBACKC	0x110
 #define ACTION_PS		0x111
 
@@ -37,7 +38,9 @@
 #define FB_SET_BPP _IOW('F', 0x2e, unsigned int)
 #define FB_UV_PS _IOW('F', 0x2f, unsigned int) //cgl
 #define FB_SET_BURST_LEN _IOW('F', 0x30, unsigned int) //cgl
-#define FB_UPDATE_TEST _IOW('F', 0x31, unsigned int)
+#define FB_UPDATE_TEST1 _IOW('F', 0x31, unsigned int)
+#define FB_UPDATE_TEST2 _IOW('F', 0x32, unsigned int)
+#define FB_UPDATE_TEST3 _IOW('F', 0x33, unsigned int)
 #define FB_UI_MEM_SIZE 0x2000000
 #define FB_VID_MEM_SIZE 0x1000000
 #define FB_CAP_MEM_SIZE 0x1000000
@@ -993,10 +996,32 @@ int set_burst_len(unsigned int len)
 
 int do_update()
 {
-	if (ioctl(fd, FB_UPDATE_TEST, NULL) < 0) {
-		printf("[E:xiehang] ioctl * failed!\n");
+	char outfile[64];
+	if (ioctl(fd, FB_UPDATE_TEST1, NULL) < 0) {
+		printf("[E:xiehang] ioctl 1 failed!\n");
 		return -1;
 	}
+	sprintf(outfile, "out_update%d.bmp", wb_cur);
+	save_output(outfile, wb_buffer[wb_cur]);
+	wb_cur = (wb_cur+1)%3;
+
+	if (ioctl(fd, FB_UPDATE_TEST2, NULL) < 0) {
+		printf("[E:xiehang] ioctl 2 failed!\n");
+		return -1;
+	}
+	sprintf(outfile, "out_update%d.bmp", wb_cur);
+	save_output(outfile, wb_buffer[wb_cur]);
+	wb_cur = (wb_cur+1)%3;
+
+	//
+	if (ioctl(fd, FB_UPDATE_TEST3, NULL) < 0) {
+		printf("[E:xiehang] ioctl 3 failed!\n");
+		return -1;
+	}
+	sprintf(outfile, "out_update%d.bmp", wb_cur);
+	save_output(outfile, wb_buffer[wb_cur]);
+	wb_cur = (wb_cur+1)%3;
+
 	return 0;
 }
 
@@ -1137,6 +1162,135 @@ int uv_process(int index)
 	return 0;
 }
 
+int get_random_rect(struct rect_t *r)
+{
+	r->left = rand()%100;
+	r->right = rand()%100;
+	r->top = rand()%100;
+	r->bottom = rand()%100;
+	while (r->left==r->right) r->right = rand()%100;
+	if (r->left > r->right) {
+		r->left += r->right;
+		r->right = r->left-r->right;
+		r->left -= r->right;
+	}
+	while (r->top==r->bottom) r->bottom = rand()%100;
+	if (r->top > r->bottom) {
+		r->top += r->bottom;
+		r->bottom = r->top-r->bottom;
+		r->top -= r->bottom;
+	}
+	return 0;
+}
+
+int random_process(unsigned int index)
+{
+	int vmindex, srcindex, layer;
+	struct rect_t tmp;
+	char outfile[64];
+	unsigned int intstat;
+
+	srand(time(0));
+	/* rand videomode */
+	vmindex = rand()%(sizeof(random_cases)/sizeof(struct uv_case));
+	/* rand src */
+	srcindex = rand()%(sizeof(random_cases)/sizeof(struct uv_case));
+	/* rand layer */
+	layer = rand()%3;
+	if (layer==0)
+		random_cases[srcindex].vi.swtch = 0;
+	else if (layer==1)
+		random_cases[srcindex].ui.swtch = 0;
+	/* rand crop */
+	get_random_rect(&tmp);
+	random_cases[srcindex].ui.src.rect.left = random_cases[srcindex].ui.src.rect.left*tmp.left/100;
+	random_cases[srcindex].ui.src.rect.right = random_cases[srcindex].ui.src.rect.right*tmp.right/100;
+	random_cases[srcindex].ui.src.rect.top = random_cases[srcindex].ui.src.rect.top*tmp.top/100;
+	random_cases[srcindex].ui.src.rect.bottom = random_cases[srcindex].ui.src.rect.bottom*tmp.bottom/100;
+
+	get_random_rect(&tmp);
+	random_cases[srcindex].vi.src.rect.left = random_cases[srcindex].vi.src.rect.left*tmp.left/100;
+	random_cases[srcindex].vi.src.rect.right = random_cases[srcindex].vi.src.rect.right*tmp.right/100;
+	random_cases[srcindex].vi.src.rect.top = random_cases[srcindex].vi.src.rect.top*tmp.top/100;
+	random_cases[srcindex].vi.src.rect.bottom = random_cases[srcindex].vi.src.rect.bottom*tmp.bottom/100;
+	/* rand scale */
+	get_random_rect(&tmp);
+	random_cases[srcindex].ui.dst.rect.left = random_cases[srcindex].ui.dst.rect.left*tmp.left/100;
+	random_cases[srcindex].ui.dst.rect.right = random_cases[srcindex].ui.dst.rect.right*tmp.right/100;
+	random_cases[srcindex].ui.dst.rect.top = random_cases[srcindex].ui.dst.rect.top*tmp.top/100;
+	random_cases[srcindex].ui.dst.rect.bottom = random_cases[srcindex].ui.dst.rect.bottom*tmp.bottom/100;
+	random_cases[srcindex].ui.dst.width = random_cases[srcindex].ui.dst.rect.right-random_cases[srcindex].ui.dst.rect.left;
+	random_cases[srcindex].ui.dst.height = random_cases[srcindex].ui.dst.rect.bottom-random_cases[srcindex].ui.dst.rect.top;
+
+	get_random_rect(&tmp);
+	random_cases[srcindex].vi.dst.rect.left = random_cases[srcindex].vi.dst.rect.left*tmp.left/100;
+	random_cases[srcindex].vi.dst.rect.right = random_cases[srcindex].vi.dst.rect.right*tmp.right/100;
+	random_cases[srcindex].vi.dst.rect.top = random_cases[srcindex].vi.dst.rect.top*tmp.top/100;
+	random_cases[srcindex].vi.dst.rect.bottom = random_cases[srcindex].vi.dst.rect.bottom*tmp.bottom/100;
+	random_cases[srcindex].vi.dst.width = random_cases[srcindex].vi.dst.rect.right-random_cases[srcindex].vi.dst.rect.left;
+	random_cases[srcindex].vi.dst.height = random_cases[srcindex].vi.dst.rect.bottom-random_cases[srcindex].vi.dst.rect.top;
+	/* early printf in case system die */
+	fplog = fopen(logfile, "a");
+	fprintf(fplog, "\n***random case%d***\n", index);
+	if (layer==0)
+		fprintf(fplog, "Single ui\n");
+	else if (layer==1)
+		fprintf(fplog, "Single video\n");
+	else fprintf(fplog, "Compose\n");
+	fprintf(fplog, "screen: %dx%d\n", random_cases[vmindex].vm.xres, random_cases[vmindex].vm.yres);
+	fprintf(fplog, "ui src: w=%d h=%d left=%d right=%d top=%d bottom=%d\n",
+		random_cases[srcindex].ui.src.width, random_cases[srcindex].ui.src.height,
+		random_cases[srcindex].ui.src.rect.left, random_cases[srcindex].ui.src.rect.right,
+		random_cases[srcindex].ui.src.rect.top, random_cases[srcindex].ui.src.rect.bottom);
+	fprintf(fplog, "ui dst: w=%d h=%d left=%d right=%d top=%d bottom=%d\n",
+		random_cases[srcindex].ui.dst.width, random_cases[srcindex].ui.dst.height,
+		random_cases[srcindex].ui.dst.rect.left, random_cases[srcindex].ui.dst.rect.right,
+		random_cases[srcindex].ui.dst.rect.top, random_cases[srcindex].ui.dst.rect.bottom);
+	fprintf(fplog, "vi src: w=%d h=%d left=%d right=%d top=%d bottom=%d\n",
+		random_cases[srcindex].vi.src.width, random_cases[srcindex].vi.src.height,
+		random_cases[srcindex].vi.src.rect.left, random_cases[srcindex].vi.src.rect.right,
+		random_cases[srcindex].vi.src.rect.top, random_cases[srcindex].vi.src.rect.bottom);
+	fprintf(fplog, "vi dst: w=%d h=%d left=%d right=%d top=%d bottom=%d\n",
+		random_cases[srcindex].vi.dst.width, random_cases[srcindex].vi.dst.height,
+		random_cases[srcindex].vi.dst.rect.left, random_cases[srcindex].vi.dst.rect.right,
+		random_cases[srcindex].vi.dst.rect.top, random_cases[srcindex].vi.dst.rect.bottom);
+	fclose(fplog);
+
+	/* RUN CASE */
+	set_bpp(random_cases[vmindex].ui.src.format);
+	set_resolution_ratio(&(random_cases[vmindex].vm));
+	set_pclk(random_cases[vmindex].vm.pixclock);
+
+	if (get_screen_info()) return 2;
+	dump_screen_info();
+
+	if ( (random_cases[srcindex].ui_clr) && (load_bitmap(NULL, ui_buffer)) ) return -1;
+	if ( (random_cases[srcindex].vi_clr) && (load_yuv(NULL, vi_buffer)) ) return -1;
+	if (load_bitmap(random_cases[srcindex].ui_srcfile, ui_buffer)) return -1;
+	if (load_yuv(random_cases[srcindex].vi_srcfile, vi_buffer)) return -1;
+	sleep(1);
+
+	ui_param(&(random_cases[srcindex].ui));
+	vi_param(&(random_cases[srcindex].vi));
+	set_alpha(0x7f7f00);
+	sleep(1);
+	reset();
+	sleep(1);
+
+	sprintf(outfile, "out_random_case%d.bmp", index);
+	if (write_back(0)) return -1;
+	sleep(1);
+	if (save_output(outfile, wb_buffer[wb_cur])) return -1;
+	//wb_cur = 1-wb_cur;
+	get_intstat(&intstat);
+	fplog = fopen(logfile, "a");
+	fprintf(fplog, "intstat: 0x%x\n", intstat);
+	fclose(fplog);
+	sleep(1);
+
+	return 0;
+}
+
 /**
  * Function main
  */
@@ -1170,6 +1324,7 @@ int main(int argc, char *argv[])
 	else if (!strcmp(argv[1], "OFFSET"))	action = ACTION_OFFSET;
 	else if (!strcmp(argv[1], "PS"))	action = ACTION_PS;
 	else if (!strcmp(argv[1], "UPDATE"))	action = ACTION_UPDATE;
+	else if (!strcmp(argv[1], "RANDOM"))	action = ACTION_RANDOM;
 	else {
 		printf("[E:xiehang] Invalid args\n");
 		goto out;
@@ -1420,21 +1575,27 @@ int main(int argc, char *argv[])
 		}
 	}
 	else if (action == ACTION_UPDATE) {
-		load_bitmap("1280x720_1.bmp", ui_buffer);
+		load_bitmap("1024x768_2.bmp", ui_buffer);
 		load_bitmap("1280x720_2.bmp", ui_buffer+FB_UPDATE_MEM_OFFSET);
-		load_bitmap("1280x720_3.bmp", ui_buffer+FB_UPDATE_MEM_OFFSET*2);
-		load_yuv("1280x720_4_Y_UV20.yuv", vi_buffer);
+		load_bitmap("1024x768_2.bmp", ui_buffer+FB_UPDATE_MEM_OFFSET*2);
+		load_yuv("1024x768_1_Y_UV20.yuv", vi_buffer);
 		load_yuv("1280x720_5_Y_UV20.yuv", vi_buffer+FB_UPDATE_MEM_OFFSET);
-		load_yuv("1280x720_6_Y_UV20.yuv", vi_buffer+FB_UPDATE_MEM_OFFSET*2);
+		load_yuv("1024x768_1_Y_UV20.yuv", vi_buffer+FB_UPDATE_MEM_OFFSET*2);
 		set_alpha(0x7f7f00);
 		do_update();
-
+/*
 		for (i=0; i<3; i++) {
 			sprintf(outfile, "out_update%d.bmp", wb_cur);
 			save_output(outfile, wb_buffer[wb_cur]);
 			wb_cur = (wb_cur+1)%3;
 		}
+*/
 
+	}
+	else if (action == ACTION_RANDOM) {
+		int time = atoi(argv[2]);
+		time = (time<=0)?1:time;
+		for (i=0; i<time; i++) random_process(i);
 	}
 
 out:
