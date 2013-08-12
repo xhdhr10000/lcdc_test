@@ -19,6 +19,7 @@
 #define ACTION_PRI_REGS 	0x10a
 #define ACTION_OFFSET		0x10b
 #define ACTION_UPDATE		0x10c
+#define ACTION_UPDATE1		0x10e
 #define ACTION_RANDOM		0x10d
 #define ACTION_WRITEBACKC	0x110
 #define ACTION_PS		0x111
@@ -41,10 +42,12 @@
 #define FB_UPDATE_TEST1 _IOW('F', 0x31, unsigned int)
 #define FB_UPDATE_TEST2 _IOW('F', 0x32, unsigned int)
 #define FB_UPDATE_TEST3 _IOW('F', 0x33, unsigned int)
+#define FB_UPDATE_TEST _IOW('F', 0x34, unsigned int)
 #define FB_UI_MEM_SIZE 0x2000000
 #define FB_VID_MEM_SIZE 0x1000000
 #define FB_CAP_MEM_SIZE 0x1000000
 #define FB_UPDATE_MEM_OFFSET 0x400000
+#define FB_CAP_MEM_OFFSET 0x800000
 
 #define DEBUG
 
@@ -266,8 +269,8 @@ int create_memory_map(int action)
 
 		vi_buffer = ui_buffer + FB_UI_MEM_SIZE;
 		wb_buffer[0] = vi_buffer + FB_VID_MEM_SIZE;
-		wb_buffer[1] = wb_buffer[0] + FB_UPDATE_MEM_OFFSET;
-		wb_buffer[2] = wb_buffer[1] + FB_UPDATE_MEM_OFFSET;
+		wb_buffer[1] = wb_buffer[0] + FB_CAP_MEM_OFFSET;
+		wb_buffer[2] = wb_buffer[1] + FB_CAP_MEM_OFFSET;
 		break;
 	default:
 		ui_buffer = mmap(0, FB_UI_MEM_SIZE + FB_VID_MEM_SIZE + FB_CAP_MEM_SIZE*2, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
@@ -994,7 +997,7 @@ int set_burst_len(unsigned int len)
 	return 0;
 }
 
-int do_update()
+int do_update1()
 {
 	char outfile[64];
 	if (ioctl(fd, FB_UPDATE_TEST1, NULL) < 0) {
@@ -1025,6 +1028,53 @@ int do_update()
 	return 0;
 }
 
+int do_update(int tmp)
+{
+	int i;
+	char outfile[64];
+
+	if(tmp == 9) {
+		for(i = 0; i < 9; i++) {
+			if (ioctl(fd, FB_UPDATE_TEST, &i) < 0) {
+				printf("[E:xiehang] ioctl %d failed!\n", i);
+				return -1;
+			}
+			sprintf(outfile, "out_update%d1.bmp", i);
+			save_output(outfile, wb_buffer[wb_cur]);
+			wb_cur = (wb_cur+1)%3;
+
+			sprintf(outfile, "out_update%d2.bmp", i);
+			save_output(outfile, wb_buffer[wb_cur]);
+			wb_cur = (wb_cur+1)%3;
+
+			sprintf(outfile, "out_update%d3.bmp", i);
+			save_output(outfile, wb_buffer[wb_cur]);
+			wb_cur = (wb_cur+1)%3;
+		}
+	} else  {
+		i = tmp;
+		if (ioctl(fd, FB_UPDATE_TEST, &i) < 0) {
+			printf("[E:xiehang] ioctl %d failed!\n", i);
+			return -1;
+		}
+		sprintf(outfile, "out_update%d1.bmp", i);
+		save_output(outfile, wb_buffer[wb_cur]);
+		wb_cur = (wb_cur+1)%3;
+
+		sprintf(outfile, "out_update%d2.bmp", i);
+		save_output(outfile, wb_buffer[wb_cur]);
+		wb_cur = (wb_cur+1)%3;
+
+		sprintf(outfile, "out_update%d3.bmp", i);
+		save_output(outfile, wb_buffer[wb_cur]);
+		wb_cur = (wb_cur+1)%3;
+
+	}
+
+
+	return 0;
+}
+
 int ui_process(int index)
 {
 	char outfile[64];
@@ -1034,7 +1084,7 @@ int ui_process(int index)
 	printf("[cgl_info] ui_case[%d].ui.src.format=%d\n", index, ui_cases[index].ui.src.format);
 	set_resolution_ratio(&(ui_cases[index].vm));
 
-	//set_burst_len(ui_cases[index].burst_length);
+	set_burst_len(ui_cases[index].burst_length);
 
 	if (get_screen_info()) return 2;
 	dump_screen_info();
@@ -1100,7 +1150,9 @@ int vi_process(int index)
 	set_alpha(0xff0000);
 	sleep(1);
 	reset();
+	printf("sleep test start\n");
 	sleep(1);
+	printf("sleep test end\n");
 
 	sprintf(outfile, "out_vid_case%d.bmp", index);
 #ifdef DEV_ANDROID
@@ -1323,6 +1375,7 @@ int main(int argc, char *argv[])
 	else if (!strcmp(argv[1], "PRI"))	action = ACTION_PRI_REGS;
 	else if (!strcmp(argv[1], "OFFSET"))	action = ACTION_OFFSET;
 	else if (!strcmp(argv[1], "PS"))	action = ACTION_PS;
+	else if (!strcmp(argv[1], "UPDATE1"))	action = ACTION_UPDATE1;
 	else if (!strcmp(argv[1], "UPDATE"))	action = ACTION_UPDATE;
 	else if (!strcmp(argv[1], "RANDOM"))	action = ACTION_RANDOM;
 	else {
@@ -1574,7 +1627,7 @@ int main(int argc, char *argv[])
 			//load_bitmap(NULL, ui_buffer);
 		}
 	}
-	else if (action == ACTION_UPDATE) {
+	else if (action == ACTION_UPDATE1) {
 		load_bitmap("1024x768_2.bmp", ui_buffer);
 		load_bitmap("1280x720_2.bmp", ui_buffer+FB_UPDATE_MEM_OFFSET);
 		load_bitmap("1024x768_2.bmp", ui_buffer+FB_UPDATE_MEM_OFFSET*2);
@@ -1582,7 +1635,29 @@ int main(int argc, char *argv[])
 		load_yuv("1280x720_5_Y_UV20.yuv", vi_buffer+FB_UPDATE_MEM_OFFSET);
 		load_yuv("1024x768_1_Y_UV20.yuv", vi_buffer+FB_UPDATE_MEM_OFFSET*2);
 		set_alpha(0x7f7f00);
-		do_update();
+		do_update1();
+/*
+		for (i=0; i<3; i++) {
+			sprintf(outfile, "out_update%d.bmp", wb_cur);
+			save_output(outfile, wb_buffer[wb_cur]);
+			wb_cur = (wb_cur+1)%3;
+		}
+*/
+
+	}
+	else if (action == ACTION_UPDATE) {
+		i = 9;
+		load_bitmap("1280x720_1.bmp", ui_buffer);
+		load_yuv("1280x720_2_Y_UV20.yuv", vi_buffer);
+		set_alpha(0x7f7f00);
+		set_pclk(3);
+		if (argc > 2) {
+			i = atoi(argv[2]);
+			do_update(i);
+		} else {
+			do_update(9);
+		}
+	
 /*
 		for (i=0; i<3; i++) {
 			sprintf(outfile, "out_update%d.bmp", wb_cur);
