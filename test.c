@@ -1357,7 +1357,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 
-	if(!strcmp(argv[argc - 1], "O")) {
+	if(!strcmp(argv[argc - 1], "log")) {
 		open_log_flag = 1;
 
 	}
