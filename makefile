@@ -1,6 +1,11 @@
 ANDROIDFLAG += -D DEV_ANDROID
 
-lcdc_test:
+nu10:
+	make clean
+	arm-none-linux-gnueabi-gcc nu10_lcdc_test.c -o u
+	arm-none-linux-gnueabi-gcc -static nu10_lcdc_test.c -o a
+
+nu7:
 	make clean
 	arm-none-linux-gnueabi-gcc test.c -o u
 	arm-none-linux-gnueabi-gcc -static $(ANDROIDFLAG) test.c -o a

@@ -1,0 +1,299 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+ABGR1555	nu10_lcdc_test.h	/^	ABGR1555,$/;"	e	enum:Sample
+ABGR8888	nu10_lcdc_test.h	/^	ABGR8888,$/;"	e	enum:Sample
+ACTION_CAPTURE	test.c	13;"	d	file:
+ACTION_CLEAR	test.c	14;"	d	file:
+ACTION_LOAD	test.c	15;"	d	file:
+ACTION_OFFSET	test.c	20;"	d	file:
+ACTION_PARAM	test.c	16;"	d	file:
+ACTION_PRI_REGS	test.c	19;"	d	file:
+ACTION_PS	test.c	25;"	d	file:
+ACTION_RANDOM	test.c	23;"	d	file:
+ACTION_RESET	test.c	18;"	d	file:
+ACTION_UI	test.c	10;"	d	file:
+ACTION_UPDATE	test.c	21;"	d	file:
+ACTION_UPDATE1	test.c	22;"	d	file:
+ACTION_UV	test.c	12;"	d	file:
+ACTION_VIDEO	test.c	11;"	d	file:
+ACTION_WRITEBACK	test.c	17;"	d	file:
+ACTION_WRITEBACKC	test.c	24;"	d	file:
+ARGB4444	nu10_lcdc_test.h	/^	ARGB4444,$/;"	e	enum:Sample
+ARGB8888	nu10_lcdc_test.h	/^	ARGB8888 = 0,$/;"	e	enum:Sample
+ASSERT	nu10_lcdc_test.c	10;"	d	file:
+BGR565	nu10_lcdc_test.h	/^	BGR565,$/;"	e	enum:Sample
+BIT	nu10_lcdc_test.h	5;"	d
+BI_BITFIELDS	test.c	28;"	d	file:
+BI_RGB	nu10_lcdc_test.h	19;"	d
+BI_RGB	test.c	27;"	d	file:
+DEBUG	test.c	52;"	d	file:
+FB_CAP_MEM_OFFSET	test.c	50;"	d	file:
+FB_CAP_MEM_SIZE	test.c	48;"	d	file:
+FB_CAP_PARAM	test.c	33;"	d	file:
+FB_GET_INTSTAT	test.c	38;"	d	file:
+FB_LCDC_DISABLE	nu10_lcdc_test.h	12;"	d
+FB_LCDC_ENABLE	nu10_lcdc_test.h	13;"	d
+FB_LCDC_GET_REG	nu10_lcdc_test.h	15;"	d
+FB_LCDC_SET_CONFIG	nu10_lcdc_test.h	11;"	d
+FB_LCDC_SET_MCLK	nu10_lcdc_test.h	16;"	d
+FB_LCDC_SET_PIXCLK	nu10_lcdc_test.h	17;"	d
+FB_LCDC_WRITEBACK	nu10_lcdc_test.h	14;"	d
+FB_PRI_REGS	test.c	35;"	d	file:
+FB_RESET_PARAM	test.c	34;"	d	file:
+FB_SET_ALPHA	test.c	36;"	d	file:
+FB_SET_BPP	test.c	39;"	d	file:
+FB_SET_BURST_LEN	test.c	41;"	d	file:
+FB_SET_PCLK	test.c	37;"	d	file:
+FB_UI_MEM_SIZE	nu10_lcdc_test.h	7;"	d
+FB_UI_MEM_SIZE	test.c	46;"	d	file:
+FB_UI_PARAM	test.c	31;"	d	file:
+FB_UPDATE_MEM_OFFSET	test.c	49;"	d	file:
+FB_UPDATE_TEST	test.c	45;"	d	file:
+FB_UPDATE_TEST1	test.c	42;"	d	file:
+FB_UPDATE_TEST2	test.c	43;"	d	file:
+FB_UPDATE_TEST3	test.c	44;"	d	file:
+FB_UV_PS	test.c	40;"	d	file:
+FB_VID_MEM_SIZE	test.c	47;"	d	file:
+FB_VID_PARAM	test.c	32;"	d	file:
+FB_VI_MEM_SIZE	nu10_lcdc_test.h	8;"	d
+FB_WB_MEM_SIZE	nu10_lcdc_test.h	9;"	d
+MAX_PATH	nu10_lcdc_test.h	4;"	d
+RGB555	test.h	2;"	d
+RGB565	nu10_lcdc_test.h	/^	RGB565,$/;"	e	enum:Sample
+RGB565	test.h	3;"	d
+RGB8888	test.h	1;"	d
+SET_RESOLUTION_RATIO	test.c	30;"	d	file:
+Sample	nu10_lcdc_test.h	/^enum Sample {$/;"	g
+TRACE	nu10_lcdc_test.c	14;"	d	file:
+XBGR8888	nu10_lcdc_test.h	/^	XBGR8888,$/;"	e	enum:Sample
+XRGB8888	nu10_lcdc_test.h	/^	XRGB8888,$/;"	e	enum:Sample
+YUV420	nu10_lcdc_test.h	/^	YUV420,$/;"	e	enum:Sample
+YUV420T	nu10_lcdc_test.h	/^	YUV420T,$/;"	e	enum:Sample
+bitmap_height	nu10_lcdc_test.h	/^	int		bitmap_height;$/;"	m	struct:dib_header
+bitmap_height	test.c	/^	int		bitmap_height;$/;"	m	struct:dib_header	file:
+bitmap_width	nu10_lcdc_test.h	/^	int		bitmap_width;$/;"	m	struct:dib_header
+bitmap_width	test.c	/^	int		bitmap_width;$/;"	m	struct:dib_header	file:
+bits_per_pixel	nu10_lcdc_test.h	/^	unsigned short	bits_per_pixel;$/;"	m	struct:dib_header
+bits_per_pixel	test.c	/^	unsigned short	bits_per_pixel;$/;"	m	struct:dib_header	file:
+bmp_header	nu10_lcdc_test.h	/^struct bmp_header {$/;"	s
+bmp_header	test.c	/^struct bmp_header bmp_header;$/;"	v	typeref:struct:bmp_header
+bmp_header	test.c	/^struct bmp_header {$/;"	s	file:
+bottom	test.h	/^        unsigned int bottom;$/;"	m	struct:rect_t
+burst_len	nu10_lcdc_test.h	/^	int burst_len;$/;"	m	struct:nu10_lcdc_config
+burst_length	test.h	/^	unsigned int burst_length; \/\/2,4,8,16$/;"	m	struct:ui_case
+check_status	nu10_lcdc_test.c	/^int check_status(int *irq)$/;"	f
+clr	test.h	/^	unsigned int clr;$/;"	m	struct:ui_case
+clr	test.h	/^	unsigned int clr;$/;"	m	struct:vi_case
+comp_dth_en	nu10_lcdc_test.h	/^	int comp_dth_en, dpi_md;$/;"	m	struct:nu10_lcdc_config
+comp_gm_a	nu10_lcdc_test.h	/^	int comp_gm_en, comp_gm_a[16], comp_gm_b[16];$/;"	m	struct:nu10_lcdc_config
+comp_gm_b	nu10_lcdc_test.h	/^	int comp_gm_en, comp_gm_a[16], comp_gm_b[16];$/;"	m	struct:nu10_lcdc_config
+comp_gm_en	nu10_lcdc_test.h	/^	int comp_gm_en, comp_gm_a[16], comp_gm_b[16];$/;"	m	struct:nu10_lcdc_config
+comp_size_h	nu10_lcdc_test.h	/^	int comp_size_h, comp_size_v;$/;"	m	struct:nu10_lcdc_config
+comp_size_v	nu10_lcdc_test.h	/^	int comp_size_h, comp_size_v;$/;"	m	struct:nu10_lcdc_config
+comp_ui_off_h	nu10_lcdc_test.h	/^	int comp_ui_off_h, comp_ui_off_v;$/;"	m	struct:nu10_lcdc_config
+comp_ui_off_v	nu10_lcdc_test.h	/^	int comp_ui_off_h, comp_ui_off_v;$/;"	m	struct:nu10_lcdc_config
+comp_vi_off_h	nu10_lcdc_test.h	/^	int comp_vi_off_h, comp_vi_off_v;$/;"	m	struct:nu10_lcdc_config
+comp_vi_off_v	nu10_lcdc_test.h	/^	int comp_vi_off_h, comp_vi_off_v;$/;"	m	struct:nu10_lcdc_config
+compression	nu10_lcdc_test.h	/^	unsigned int	compression;$/;"	m	struct:dib_header
+compression	test.c	/^	unsigned int	compression;$/;"	m	struct:dib_header	file:
+create_memory_map	nu10_lcdc_test.c	/^int create_memory_map(void)$/;"	f
+create_memory_map	test.c	/^int create_memory_map(int action)$/;"	f
+cursor_off_h	nu10_lcdc_test.h	/^	int cursor_off_h, cursor_off_v;$/;"	m	struct:nu10_lcdc_config
+cursor_off_v	nu10_lcdc_test.h	/^	int cursor_off_h, cursor_off_v;$/;"	m	struct:nu10_lcdc_config
+cursor_size_h	nu10_lcdc_test.h	/^	int cursor_size_h, cursor_size_v;$/;"	m	struct:nu10_lcdc_config
+cursor_size_v	nu10_lcdc_test.h	/^	int cursor_size_h, cursor_size_v;$/;"	m	struct:nu10_lcdc_config
+cursor_z	nu10_lcdc_test.h	/^	int cursor_z;$/;"	m	struct:nu10_lcdc_config
+dib_header	nu10_lcdc_test.h	/^struct dib_header {$/;"	s
+dib_header	test.c	/^struct dib_header dib_header;$/;"	v	typeref:struct:dib_header
+dib_header	test.c	/^struct dib_header {$/;"	s	file:
+do_update	test.c	/^int do_update(int tmp)$/;"	f
+do_update1	test.c	/^int do_update1()$/;"	f
+dpi_md	nu10_lcdc_test.h	/^	int comp_dth_en, dpi_md;$/;"	m	struct:nu10_lcdc_config
+dst	test.h	/^        struct gc_params dst;$/;"	m	struct:gc_spec	typeref:struct:gc_spec::gc_params
+dump_bmp_info	test.c	/^int dump_bmp_info()$/;"	f
+dump_bmp_info	test.c	321;"	d	file:
+dump_screen_info	test.c	/^int dump_screen_info()$/;"	f
+dump_screen_info	test.c	202;"	d	file:
+fb	nu10_lcdc_test.c	/^int fb;$/;"	v
+fb_videomode	test.h	/^struct fb_videomode {$/;"	s
+fd	test.c	/^int fd = -1;$/;"	v
+fi	test.c	/^struct fb_fix_screeninfo fi;$/;"	v	typeref:struct:fb_fix_screeninfo
+file_size	nu10_lcdc_test.h	/^	unsigned int	file_size;$/;"	m	struct:bmp_header
+file_size	test.c	/^	unsigned int	file_size;$/;"	m	struct:bmp_header	file:
+find_img	nu10_lcdc_test.c	/^int find_img(char **img, int h, int v, int format)$/;"	f
+flag	test.h	/^        unsigned int flag;$/;"	m	struct:fb_videomode
+flength	nu10_lcdc_test.c	/^long flength(FILE *fp)$/;"	f
+format	test.h	/^        unsigned int format; \/\/0:rgb8888 1:rgb555  2:rgb565$/;"	m	struct:gc_params
+fpbmp	test.c	/^FILE *fpbmp;$/;"	v
+fplog	test.c	/^FILE *fplog;$/;"	v
+gc_params	test.h	/^struct gc_params {$/;"	s
+gc_spec	test.h	/^struct gc_spec {$/;"	s
+get_args	nu10_lcdc_test.c	/^int get_args(int argc, char *argv[])$/;"	f
+get_intstat	test.c	/^int get_intstat(unsigned int *stat)$/;"	f
+get_random_rect	test.c	/^int get_random_rect(struct rect_t *r)$/;"	f
+get_screen_info	test.c	/^int get_screen_info()$/;"	f
+header_size	nu10_lcdc_test.h	/^	unsigned int	header_size;$/;"	m	struct:dib_header
+header_size	test.c	/^	unsigned int	header_size;$/;"	m	struct:dib_header	file:
+height	test.h	/^        unsigned int height;$/;"	m	struct:gc_params
+help	nu10_lcdc_test.c	/^int help(void)$/;"	f
+help	test.c	/^int help()$/;"	f
+horizontal_resolution	nu10_lcdc_test.h	/^	int		horizontal_resolution;	\/\/pixel per meter$/;"	m	struct:dib_header
+horizontal_resolution	test.c	/^	int		horizontal_resolution;	\/\/pixel per meter$/;"	m	struct:dib_header	file:
+hsync_len	test.h	/^        unsigned int hsync_len;$/;"	m	struct:fb_videomode
+id_major	nu10_lcdc_test.h	/^	int id_major;$/;"	m	struct:nu10_lcdc_config
+id_minor	nu10_lcdc_test.h	/^	int id_minor;$/;"	m	struct:nu10_lcdc_config
+image_size	nu10_lcdc_test.h	/^	unsigned int	image_size;$/;"	m	struct:dib_header
+image_size	test.c	/^	unsigned int	image_size;$/;"	m	struct:dib_header	file:
+lcdc_config	nu10_lcdc_test.c	/^struct nu10_lcdc_config lcdc_config;$/;"	v	typeref:struct:nu10_lcdc_config
+left	test.h	/^        unsigned int left;$/;"	m	struct:rect_t
+left_margin	test.h	/^        unsigned int left_margin;$/;"	m	struct:fb_videomode
+load_bitmap	test.c	/^int load_bitmap(char *path, void *buffer)$/;"	f
+load_image	nu10_lcdc_test.c	/^int load_image(void)$/;"	f
+load_yuv	test.c	/^int load_yuv(char *path, void *buffer)$/;"	f
+logfile	test.c	/^char logfile[256];$/;"	v
+lower_margin	test.h	/^        unsigned int lower_margin;$/;"	m	struct:fb_videomode
+magic_number	nu10_lcdc_test.h	/^	unsigned short	magic_number;$/;"	m	struct:bmp_header
+magic_number	test.c	/^	unsigned short	magic_number;$/;"	m	struct:bmp_header	file:
+main	nu10_lcdc_test.c	/^int main(int argc, char *argv[])$/;"	f
+main	test.c	/^int main(int argc, char *argv[])$/;"	f
+mclock	nu10_lcdc_test.c	/^int mclock = 0, pixclock = 0;$/;"	v
+name	test.h	/^        const char *name;     \/* optional *\/$/;"	m	struct:fb_videomode
+nu10_lcdc_config	nu10_lcdc_test.h	/^struct nu10_lcdc_config$/;"	s
+num_color_planes	nu10_lcdc_test.h	/^	unsigned short	num_color_planes;$/;"	m	struct:dib_header
+num_color_planes	test.c	/^	unsigned short	num_color_planes;$/;"	m	struct:dib_header	file:
+num_colors_in_palette	nu10_lcdc_test.h	/^	unsigned int	num_colors_in_palette;$/;"	m	struct:dib_header
+num_colors_in_palette	test.c	/^	unsigned int	num_colors_in_palette;$/;"	m	struct:dib_header	file:
+num_important_colors	nu10_lcdc_test.h	/^	unsigned int	num_important_colors;$/;"	m	struct:dib_header
+num_important_colors	test.c	/^	unsigned int	num_important_colors;$/;"	m	struct:dib_header	file:
+offset	nu10_lcdc_test.h	/^	unsigned int	offset;$/;"	m	struct:bmp_header
+offset	test.c	/^	unsigned int	offset;$/;"	m	struct:bmp_header	file:
+offset_cases	test.h	/^struct uv_case offset_cases[] = {$/;"	v	typeref:struct:uv_case
+open_bmp_file	test.c	/^int open_bmp_file(char *path)$/;"	f
+open_framebuffer	nu10_lcdc_test.c	/^int open_framebuffer(void)$/;"	f
+open_framebuffer	test.c	/^int open_framebuffer(char *fb)$/;"	f
+open_log_flag	test.c	/^int open_log_flag = 0;$/;"	v
+physAddr	test.h	/^        unsigned int physAddr;$/;"	m	struct:gc_params
+pixclock	nu10_lcdc_test.c	/^int mclock = 0, pixclock = 0;$/;"	v
+pixclock	test.h	/^        unsigned int pixclock;$/;"	m	struct:fb_videomode
+pri_regs	test.c	/^int pri_regs()$/;"	f
+random_cases	test.h	/^struct uv_case random_cases[] = {$/;"	v	typeref:struct:uv_case
+random_process	test.c	/^int random_process(unsigned int index)$/;"	f
+read_config	nu10_lcdc_test.c	/^int read_config(void)$/;"	f
+rect	test.h	/^        struct rect_t rect;$/;"	m	struct:gc_params	typeref:struct:gc_params::rect_t
+rect_t	test.h	/^struct rect_t {$/;"	s
+refresh	test.h	/^        unsigned int refresh; \/* optional *\/$/;"	m	struct:fb_videomode
+reserved	nu10_lcdc_test.h	/^	unsigned short	reserved[2];$/;"	m	struct:bmp_header
+reserved	test.c	/^	unsigned short	reserved[2];$/;"	m	struct:bmp_header	file:
+reset	test.c	/^int reset()$/;"	f
+right	test.h	/^        unsigned int right;$/;"	m	struct:rect_t
+right_margin	test.h	/^        unsigned int right_margin;$/;"	m	struct:fb_videomode
+save_output	test.c	/^int save_output(char *path, void *buffer)$/;"	f
+save_yuv	test.c	/^int save_yuv(char *path, void *buffer)$/;"	f
+set_alpha	test.c	/^int set_alpha(unsigned int alpha)$/;"	f
+set_bpp	test.c	/^int set_bpp(unsigned int format)$/;"	f
+set_burst_len	test.c	/^int set_burst_len(unsigned int len)$/;"	f
+set_clk	nu10_lcdc_test.c	/^int set_clk(void)$/;"	f
+set_config	nu10_lcdc_test.c	/^int set_config(void)$/;"	f
+set_pclk	test.c	/^int set_pclk(unsigned int pclk)$/;"	f
+set_resolution_ratio	test.c	/^int set_resolution_ratio(struct fb_videomode *vm)$/;"	f
+set_screen_info	test.c	/^int set_screen_info()$/;"	f
+src	test.h	/^        struct gc_params src;$/;"	m	struct:gc_spec	typeref:struct:gc_spec::gc_params
+srcfile	test.h	/^	char srcfile[64];$/;"	m	struct:ui_case
+srcfile	test.h	/^	char srcfile[64];$/;"	m	struct:vi_case
+stride	test.h	/^        unsigned int stride;$/;"	m	struct:gc_params
+swtch	test.h	/^        unsigned int swtch;$/;"	m	struct:gc_spec
+sync	test.h	/^        unsigned int sync;$/;"	m	struct:fb_videomode
+test_case	nu10_lcdc_test.c	/^char *test_case = NULL;$/;"	v
+top	test.h	/^        unsigned int top;$/;"	m	struct:rect_t
+ui	test.h	/^	struct gc_spec ui;$/;"	m	struct:ui_case	typeref:struct:ui_case::gc_spec
+ui	test.h	/^	struct gc_spec ui;$/;"	m	struct:uv_case	typeref:struct:uv_case::gc_spec
+ui_alpha_src	nu10_lcdc_test.h	/^	int ui_alpha_src;$/;"	m	struct:nu10_lcdc_config
+ui_buffer	nu10_lcdc_test.c	/^void *ui_buffer, *vi_buffer, *wb_buffer[2];$/;"	v
+ui_buffer	test.c	/^void *ui_buffer, *vi_buffer, *wb_buffer[3];$/;"	v
+ui_case	test.h	/^struct ui_case {$/;"	s
+ui_cases	test.h	/^struct ui_case ui_cases[] = {$/;"	v	typeref:struct:ui_case
+ui_close_layer	test.h	/^struct ui_case ui_close_layer =$/;"	v	typeref:struct:ui_case
+ui_clr	test.h	/^	unsigned int ui_clr;$/;"	m	struct:uv_case
+ui_crop_h	nu10_lcdc_test.h	/^	int ui_crop_h, ui_crop_v;$/;"	m	struct:nu10_lcdc_config
+ui_crop_off_h	nu10_lcdc_test.h	/^	int ui_crop_off_h, ui_crop_off_v;$/;"	m	struct:nu10_lcdc_config
+ui_crop_off_v	nu10_lcdc_test.h	/^	int ui_crop_off_h, ui_crop_off_v;$/;"	m	struct:nu10_lcdc_config
+ui_crop_v	nu10_lcdc_test.h	/^	int ui_crop_h, ui_crop_v;$/;"	m	struct:nu10_lcdc_config
+ui_dth_en	nu10_lcdc_test.h	/^	int ui_dth_en;$/;"	m	struct:nu10_lcdc_config
+ui_filt0	nu10_lcdc_test.h	/^	int ui_filt0, ui_filt1, ui_filt2;$/;"	m	struct:nu10_lcdc_config
+ui_filt1	nu10_lcdc_test.h	/^	int ui_filt0, ui_filt1, ui_filt2;$/;"	m	struct:nu10_lcdc_config
+ui_filt2	nu10_lcdc_test.h	/^	int ui_filt0, ui_filt1, ui_filt2;$/;"	m	struct:nu10_lcdc_config
+ui_filt_en	nu10_lcdc_test.h	/^	int ui_filt_en;$/;"	m	struct:nu10_lcdc_config
+ui_gm_a	nu10_lcdc_test.h	/^	int ui_gm_en, ui_gm_a[16], ui_gm_b[16];$/;"	m	struct:nu10_lcdc_config
+ui_gm_b	nu10_lcdc_test.h	/^	int ui_gm_en, ui_gm_a[16], ui_gm_b[16];$/;"	m	struct:nu10_lcdc_config
+ui_gm_en	nu10_lcdc_test.h	/^	int ui_gm_en, ui_gm_a[16], ui_gm_b[16];$/;"	m	struct:nu10_lcdc_config
+ui_img	nu10_lcdc_test.c	/^char *ui_img = NULL;$/;"	v
+ui_ori_h	nu10_lcdc_test.h	/^	int ui_ori_h, ui_ori_v;$/;"	m	struct:nu10_lcdc_config
+ui_ori_v	nu10_lcdc_test.h	/^	int ui_ori_h, ui_ori_v;$/;"	m	struct:nu10_lcdc_config
+ui_param	test.c	/^int ui_param(struct gc_spec *spec)$/;"	f
+ui_process	test.c	/^int ui_process(int index)$/;"	f
+ui_sample	nu10_lcdc_test.h	/^	enum Sample ui_sample;$/;"	m	struct:nu10_lcdc_config	typeref:enum:nu10_lcdc_config::Sample
+ui_scale_h	nu10_lcdc_test.h	/^	int ui_scale_h, ui_scale_v;$/;"	m	struct:nu10_lcdc_config
+ui_scale_v	nu10_lcdc_test.h	/^	int ui_scale_h, ui_scale_v;$/;"	m	struct:nu10_lcdc_config
+ui_srcfile	test.h	/^	char ui_srcfile[64];$/;"	m	struct:uv_case
+ui_z	nu10_lcdc_test.h	/^	int ui_z;$/;"	m	struct:nu10_lcdc_config
+upd	test.h	/^        unsigned int upd;$/;"	m	struct:gc_spec
+upper_margin	test.h	/^        unsigned int upper_margin;$/;"	m	struct:fb_videomode
+uv_case	test.h	/^struct uv_case {$/;"	s
+uv_cases	test.h	/^struct uv_case uv_cases[] = {$/;"	v	typeref:struct:uv_case
+uv_process	test.c	/^int uv_process(int index)$/;"	f
+uv_ptr_sw	test.c	/^int uv_ptr_sw(unsigned int seq)$/;"	f
+verbose	nu10_lcdc_test.c	/^int verbose = 0;$/;"	v
+vertical_resolution	nu10_lcdc_test.h	/^	int		vertical_resolution;	\/\/pixel per meter$/;"	m	struct:dib_header
+vertical_resolution	test.c	/^	int		vertical_resolution;	\/\/pixel per meter$/;"	m	struct:dib_header	file:
+vi	test.c	/^struct fb_var_screeninfo vi;$/;"	v	typeref:struct:fb_var_screeninfo
+vi	test.h	/^	struct gc_spec vi;$/;"	m	struct:uv_case	typeref:struct:uv_case::gc_spec
+vi	test.h	/^	struct gc_spec vi;$/;"	m	struct:vi_case	typeref:struct:vi_case::gc_spec
+vi_alpha_src	nu10_lcdc_test.h	/^	int vi_alpha_src;$/;"	m	struct:nu10_lcdc_config
+vi_buffer	nu10_lcdc_test.c	/^void *ui_buffer, *vi_buffer, *wb_buffer[2];$/;"	v
+vi_buffer	test.c	/^void *ui_buffer, *vi_buffer, *wb_buffer[3];$/;"	v
+vi_case	test.h	/^struct vi_case {$/;"	s
+vi_cases	test.h	/^struct vi_case vi_cases[] = {$/;"	v	typeref:struct:vi_case
+vi_close_layer	test.h	/^struct vi_case vi_close_layer =$/;"	v	typeref:struct:vi_case
+vi_clr	test.h	/^	unsigned int vi_clr;$/;"	m	struct:uv_case
+vi_crop_h	nu10_lcdc_test.h	/^	int vi_crop_h, vi_crop_v;$/;"	m	struct:nu10_lcdc_config
+vi_crop_off_h	nu10_lcdc_test.h	/^	int vi_crop_off_h, vi_crop_off_v;$/;"	m	struct:nu10_lcdc_config
+vi_crop_off_v	nu10_lcdc_test.h	/^	int vi_crop_off_h, vi_crop_off_v;$/;"	m	struct:nu10_lcdc_config
+vi_crop_v	nu10_lcdc_test.h	/^	int vi_crop_h, vi_crop_v;$/;"	m	struct:nu10_lcdc_config
+vi_dth_en	nu10_lcdc_test.h	/^	int vi_dth_en;$/;"	m	struct:nu10_lcdc_config
+vi_filt0	nu10_lcdc_test.h	/^	int vi_filt0, vi_filt1, vi_filt2;$/;"	m	struct:nu10_lcdc_config
+vi_filt1	nu10_lcdc_test.h	/^	int vi_filt0, vi_filt1, vi_filt2;$/;"	m	struct:nu10_lcdc_config
+vi_filt2	nu10_lcdc_test.h	/^	int vi_filt0, vi_filt1, vi_filt2;$/;"	m	struct:nu10_lcdc_config
+vi_filt_en	nu10_lcdc_test.h	/^	int vi_filt_en;$/;"	m	struct:nu10_lcdc_config
+vi_gm_a	nu10_lcdc_test.h	/^	int vi_gm_en, vi_gm_a[16], vi_gm_b[16];$/;"	m	struct:nu10_lcdc_config
+vi_gm_b	nu10_lcdc_test.h	/^	int vi_gm_en, vi_gm_a[16], vi_gm_b[16];$/;"	m	struct:nu10_lcdc_config
+vi_gm_en	nu10_lcdc_test.h	/^	int vi_gm_en, vi_gm_a[16], vi_gm_b[16];$/;"	m	struct:nu10_lcdc_config
+vi_img	nu10_lcdc_test.c	/^char *vi_img = NULL;$/;"	v
+vi_ori_h	nu10_lcdc_test.h	/^	int vi_ori_h, vi_ori_v;$/;"	m	struct:nu10_lcdc_config
+vi_ori_v	nu10_lcdc_test.h	/^	int vi_ori_h, vi_ori_v;$/;"	m	struct:nu10_lcdc_config
+vi_param	test.c	/^int vi_param(struct gc_spec *spec)$/;"	f
+vi_process	test.c	/^int vi_process(int index)$/;"	f
+vi_rotation	nu10_lcdc_test.h	/^	int vi_rotation;$/;"	m	struct:nu10_lcdc_config
+vi_sample	nu10_lcdc_test.h	/^	enum Sample vi_sample;$/;"	m	struct:nu10_lcdc_config	typeref:enum:nu10_lcdc_config::Sample
+vi_scale_h	nu10_lcdc_test.h	/^	int vi_scale_h, vi_scale_v;$/;"	m	struct:nu10_lcdc_config
+vi_scale_v	nu10_lcdc_test.h	/^	int vi_scale_h, vi_scale_v;$/;"	m	struct:nu10_lcdc_config
+vi_srcfile	test.h	/^	char vi_srcfile[64];$/;"	m	struct:uv_case
+vi_stride	nu10_lcdc_test.h	/^	int vi_stride;$/;"	m	struct:nu10_lcdc_config
+vi_z	nu10_lcdc_test.h	/^	int vi_z;$/;"	m	struct:nu10_lcdc_config
+vm	test.h	/^	struct fb_videomode vm;$/;"	m	struct:ui_case	typeref:struct:ui_case::fb_videomode
+vm	test.h	/^	struct fb_videomode vm;$/;"	m	struct:uv_case	typeref:struct:uv_case::fb_videomode
+vm	test.h	/^	struct fb_videomode vm;$/;"	m	struct:vi_case	typeref:struct:vi_case::fb_videomode
+vmode	test.h	/^        unsigned int vmode;$/;"	m	struct:fb_videomode
+vsync_len	test.h	/^        unsigned int vsync_len;$/;"	m	struct:fb_videomode
+wb_buffer	nu10_lcdc_test.c	/^void *ui_buffer, *vi_buffer, *wb_buffer[2];$/;"	v
+wb_buffer	test.c	/^void *ui_buffer, *vi_buffer, *wb_buffer[3];$/;"	v
+wb_cur	test.c	/^int wb_cur = 0;$/;"	v
+width	test.h	/^        unsigned int width;$/;"	m	struct:gc_params
+write_back	test.c	/^int write_back(int flag)$/;"	f
+writeback	nu10_lcdc_test.c	/^int writeback(void)$/;"	f
+writelog	nu10_lcdc_test.c	/^int writelog(int irq)$/;"	f
+xres	test.h	/^        unsigned int xres;$/;"	m	struct:fb_videomode
+yres	test.h	/^        unsigned int yres;$/;"	m	struct:fb_videomode
