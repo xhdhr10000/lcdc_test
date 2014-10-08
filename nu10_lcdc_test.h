@@ -15,6 +15,7 @@
 #define FB_LCDC_GET_REG		_IOR('F', 0x25, int)
 #define FB_LCDC_SET_MCLK	_IOW('F', 0x26, int)
 #define FB_LCDC_SET_PIXCLK	_IOW('F', 0x27, int)
+#define FB_LCDC_UPDATE_CONFIG	_IOW('F', 0x28, struct nu10_lcdc_config)
 
 #define BI_RGB			0
 
@@ -25,6 +26,7 @@ enum Sample {
 	XRGB8888,
 	XBGR8888,
 	ABGR1555,
+	RGBA5551,
 	ARGB4444,
 	RGB565,
 	BGR565,
@@ -47,7 +49,8 @@ struct nu10_lcdc_config
 	int ui_filt0, ui_filt1, ui_filt2;
 	int ui_alpha_src;
 	int ui_z;
-	int ui_gm_en, ui_gm_a[16], ui_gm_b[16];
+	int ui_gm_en;
+	short ui_gm_a[16], ui_gm_b[16];
 	int ui_dth_en;
 
 	/* Video layer */
@@ -62,14 +65,16 @@ struct nu10_lcdc_config
 	int vi_filt0, vi_filt1, vi_filt2;
 	int vi_alpha_src;
 	int vi_z;
-	int vi_gm_en, vi_gm_a[16], vi_gm_b[16];
+	int vi_gm_en;
+	short vi_gm_a[16], vi_gm_b[16];
 	int vi_dth_en;
 
 	/* Common path */
 	int comp_size_h, comp_size_v;
 	int comp_ui_off_h, comp_ui_off_v;
 	int comp_vi_off_h, comp_vi_off_v;
-	int comp_gm_en, comp_gm_a[16], comp_gm_b[16];
+	int comp_gm_en;
+	short comp_gm_a[16], comp_gm_b[16];
 	int comp_dth_en, dpi_md;
 
 	int burst_len;

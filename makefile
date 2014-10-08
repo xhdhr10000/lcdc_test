@@ -3,6 +3,7 @@ ANDROIDFLAG += -D DEV_ANDROID
 nu10:
 	make clean
 	arm-none-linux-gnueabi-gcc nu10_lcdc_test.c -o u
+	arm-none-linux-gnueabi-gcc -D SCENE_CHANGE nu10_lcdc_test.c -o s
 	arm-none-linux-gnueabi-gcc -static nu10_lcdc_test.c -o a
 
 nu7:
