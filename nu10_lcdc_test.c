@@ -15,6 +15,9 @@
 
 /*** global viriables ***/
 int verbose = 0;
+int update = 0;
+int capture_yuv = 0;
+int just_log = 0;
 char *test_case = NULL;
 char *ui_img = NULL;
 char *vi_img = NULL;
@@ -112,6 +115,18 @@ int get_args(int argc, char *argv[])
 		else if (!strcmp(argv[i], "-mclk") || !strcmp(argv[i], "--mclk")) {
 			i++;
 			sscanf(argv[i], "%x", &mclock);
+		}
+		else if (!strcmp(argv[i], "-up") || !strcmp(argv[i], "--update")) {
+			i++;
+			update = 1;
+		}
+		else if (!strcmp(argv[i], "-cv") || !strcmp(argv[i], "--capture-video")) {
+			i++;
+			capture_yuv = 1;
+		}
+		else if (!strcmp(argv[i], "-l") || !strcmp(argv[i], "--log")) {
+			i++;
+			just_log = 1;
 		}
 	}
 
@@ -302,7 +317,7 @@ int writeback(struct nu10_lcdc_config *config)
 
 	TRACE;
 
-	ASSERT(ioctl(fb, FB_LCDC_WRITEBACK, NULL) >= 0, "ioctl FB_LCDC_WRITEBACK failed");
+	ASSERT(ioctl(fb, FB_LCDC_WRITEBACK, &capture_yuv) >= 0, "ioctl FB_LCDC_WRITEBACK failed");
 
 	while (!(irq & BIT(1))) {
 		sleep(1);
@@ -338,9 +353,13 @@ int writeback(struct nu10_lcdc_config *config)
 	bmp_header.file_size = dib_header.image_size+bmp_header.offset;
 	bmp_header.reserved[0] = bmp_header.reserved[1] = 0;
 
-	length = bmp_header.file_size;
-	ASSERT(fwrite(&bmp_header, 1, sizeof(bmp_header), fpimg), "fwrite bmp_header failed");
-	ASSERT(fwrite(&dib_header, 1, sizeof(dib_header), fpimg), "fwrite dib_header failed");
+	if (capture_yuv) {
+		length = lcdc_config.comp_size_h*lcdc_config.comp_size_v*3/2;
+	} else {
+		length = bmp_header.file_size;
+		ASSERT(fwrite(&bmp_header, 1, sizeof(bmp_header), fpimg), "fwrite bmp_header failed");
+		ASSERT(fwrite(&dib_header, 1, sizeof(dib_header), fpimg), "fwrite dib_header failed");
+	}
 	ASSERT(fwrite(wb_buffer[0], 1, length, fpimg), "fwrite image failed");
 
 	fclose(fpimg);
@@ -461,7 +480,8 @@ int scene_change(void)
 
 		fclose(fpcase);
 	} while (lcdc_config2.comp_size_h != lcdc_config.comp_size_h ||
-		 lcdc_config2.comp_size_v != lcdc_config.comp_size_v);
+		 lcdc_config2.comp_size_v != lcdc_config.comp_size_v ||
+		 lcdc_config2.vi_stride != lcdc_config.vi_stride);
 
 	printf("Got case %d_%d with resolution %dx%d\n",
 		lcdc_config2.id_major, lcdc_config2.id_minor,
@@ -509,8 +529,16 @@ int main(int argc, char *argv[])
 	ASSERT(!scene_change(), "scene_change failed");
 #else
 	ASSERT(!read_config(), "read_config failed");
+	if (just_log) {
+		writelog(0, NULL);
+		return 0;
+	}
 	ASSERT(!load_image(NULL, NULL), "load_image failed");
-	ASSERT(!set_config(), "set_config failed");
+	if (!update) {
+		ASSERT(!set_config(), "set_config failed");
+	} else {
+		ASSERT(!update_config(&lcdc_config), "update_config failed");
+	}
 	sleep(2);
 	ASSERT(!writeback(NULL), "writeback failed");
 	if (check_status(&irq)) {
